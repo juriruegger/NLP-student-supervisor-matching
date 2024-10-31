@@ -31,22 +31,21 @@ export default function Layout({
         >
           <SidebarProvider>
             <AppSidebar />
-            <main style={{ flexGrow: 1 }}>
+            <div className="grow">
               <Card
-                className="md:m-2 h-full p-6 card-full-height bg-backgroundCard"
-                style={{ height: "98%" }}
+                className="md:m-2 p-6 bg-backgroundCard grow"
               >
                 <div className="relative h-screen">
                   <div className="sticky top-4 left-0 z-10 flex justify-between w-full px-4">
                     <SidebarTrigger className="mt-1.5" />
                     <ModeToggle />
                   </div>
-                  <div className="mt-12 mx-4 md:mx-12 lg:mx-24 xl:mx-52 transition-all ease-out">
+                  <div className="pt-12 px-4 md:px-12 lg:px-24 xl:px-52 transition-all ease-out">
                     {children}
                   </div>
                 </div>
               </Card>
-            </main>
+            </div>
 
             <Toaster />
           </SidebarProvider>
