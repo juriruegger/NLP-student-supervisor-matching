@@ -1,8 +1,8 @@
-"use clinet";
+"use client";
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { content } from "../content";
+import { content } from "../../lib/content";
 
 export function Homepage() {
   return (

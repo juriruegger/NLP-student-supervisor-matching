@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { storeStudent } from "./actions";
 
 const formSchema = z.object({
   name: z
@@ -38,10 +39,14 @@ export function StudentInput() {
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
+    storeStudent(data.email, data.text);
+
     toast({
       title: `Form submitted, ${data.name}`,
     });
-    router.push("/suggestions");
+
+
+    router.push(`/suggestions?email=${data.email}`);
   }
 
   return (
