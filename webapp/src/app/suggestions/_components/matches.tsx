@@ -1,12 +1,13 @@
-import { content } from "../../lib/content";
+"use client";
+
+import { content } from "../../../lib/content";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { supervisors } from "../../lib/supervisors";
+import { supervisors } from "../../../lib/supervisors";
 
 export default function Matches() {
-
   return (
     <div>
       <h1 className="text-3xl font-bold">{content.suggestions.title}</h1>

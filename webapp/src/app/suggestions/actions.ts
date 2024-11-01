@@ -1,15 +1,11 @@
-import { getText } from "@/db/db";
+"use server";
 
-export async function getSuggestions(email: string) {
-    const studentText = await getText(email);
+import { getText } from "@/db";
 
-    /* if (!studentText) {
-        return;
-    }
-
-    const embed = await pipeline('feature-extraction', 'bert-base-uncased');
-
-    const embeddings = await embed(studentText);
-
-    console.log(embeddings); */
+export async function logText(email: string) {
+  const text = await getText(email);
+  if (!text) {
+    return;
+  }
+  return text;
 }

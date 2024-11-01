@@ -1,5 +1,5 @@
 import { content } from "../../lib/content";
-import { StudentInput } from "./studentInput";
+import { StudentInput } from "./_components/studentInput";
 
 export default function StudentFormPage() {
   return (
