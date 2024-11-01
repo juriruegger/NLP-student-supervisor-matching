@@ -1,9 +1,4 @@
-import {
-  CheckCheck,
-  Home,
-  LetterText,
-  Settings,
-} from "lucide-react";
+import { CheckCheck, Home, LetterText, Settings } from "lucide-react";
 
 import {
   Sidebar,
