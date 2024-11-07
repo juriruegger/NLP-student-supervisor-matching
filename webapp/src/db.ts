@@ -1,3 +1,5 @@
+"use server";
+
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -39,4 +41,20 @@ export async function getText(email: string) {
   const studentText = student?.text;
 
   return studentText;
+}
+
+export async function getSupervisors() {
+  const { data: embeddings, error } = await supabase
+    .from("supervisors")
+    .select("email, name, embedding_bert_768");
+
+  if (error) {
+    console.error(error);
+  }
+
+  if (!embeddings || embeddings.length === 0) {
+    console.log("No embeddings found");
+  }
+
+  return embeddings;
 }
