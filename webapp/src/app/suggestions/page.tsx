@@ -1,4 +1,6 @@
-import Matches from "./_components/matches";
+import Matches from "./matches";
+import { getSuggestions } from "./actions";
+import Link from "next/link";
 
 type PageProps = {
   searchParams: {
@@ -8,9 +10,14 @@ type PageProps = {
 export default async function Page({ searchParams }: PageProps) {
   const email = searchParams.email;
 
-  if (!email || typeof email !== "string") {
-    return <div>Missing email</div>;
+  if (!email) {
+    return <pre><Link href={'/student-form'}>No email found. Please proceed to the form</Link></pre>;
   }
 
-  return <Matches />;
+  const suggestions = await getSuggestions(email);
+
+  const topThree = await suggestions.slice(0, 3);
+
+
+  return <Matches suggestions={topThree} />;
 }

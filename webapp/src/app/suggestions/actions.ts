@@ -1,11 +1,28 @@
-"use server";
+'use server';
 
-import { getText } from "@/db";
+import { getSupervisors, getText, } from "@/db";
 
-export async function logText(email: string) {
+export async function getSuggestions(email: string) {
   const text = await getText(email);
+  const supervisors = await getSupervisors();
+
   if (!text) {
-    return;
+    return Error("No text found");
   }
-  return text;
+  
+  const res = await fetch('http://127.0.0.1:5000/api', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text, supervisors }),
+  });
+
+  if (!res.ok) {
+    return Error("Fething suggestions failed");
+  }
+
+  const suggestions = await res.json();
+  
+  return suggestions;
 }
