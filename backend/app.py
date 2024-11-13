@@ -6,8 +6,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
 
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertModel.from_pretrained('bert-base-uncased')
+tokenizer = BertTokenizer.from_pretrained('allenai/scibert_scivocab_uncased')
+model = BertModel.from_pretrained('allenai/scibert_scivocab_uncased')
 
 @app.route('/api', methods=['POST'])
 def api():

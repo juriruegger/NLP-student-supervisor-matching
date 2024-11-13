@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { content } from "../../lib/content";
 import Image from "next/image";

@@ -1,4 +1,4 @@
 export type Supervisors = {
-    supervisor: string;
-    email: string;
-}
+  supervisor: string;
+  email: string;
+};
