@@ -1,46 +1,72 @@
 "use server";
 
+import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl) {
   throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_URL");
 }
 
-if (!supabaseAnonKey) {
+if (!supabaseKey) {
   throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY");
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  global: {
+    fetch: (url, options = {}) => {
+      return fetch(url, { ...options, cache: "no-store" });
+    },
+  },
+});
 
-export async function setStudent(name: string, email: string, text: string) {
+export async function setStudent(text: string, suggestions: string[]) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw Error("No user found");
+  }
   const { data, error } = await supabase
-    .from("students")
-    .upsert({ name: name, email: email, text: text });
+    .from("new_students")
+    .upsert({ userId: userId, text: text, suggestions: suggestions })
+    .select();
 
   if (error) {
-    console.error(error);
+    throw Error("Failed to set student");
   }
 
   return data;
 }
 
-export async function getText(email: string) {
+export async function getSuggestions() {
+  const { userId } = await auth();
   const { data: student, error } = await supabase
-    .from("students")
-    .select("text")
-    .eq("email", `${email}`)
+    .from("new_students")
+    .select("suggestions")
+    .eq("userId", `${userId}`)
     .single();
 
   if (error) {
-    console.error(error);
+    throw Error("here was an error fetching the suggestions for the student");
   }
 
-  const studentText = student?.text;
+  const toReturn = [];
 
-  return studentText;
+  for (const suggestion of student?.suggestions) {
+    const { data: supervisor, error } = await supabase
+      .from("supervisors")
+      .select("name, email")
+      .eq("name", `${suggestion}`)
+      .single();
+
+    if (error) {
+      throw Error("There was an error fetching the suggestions");
+    }
+    toReturn.push(supervisor);
+  }
+
+  return toReturn;
 }
 
 export async function getSupervisors() {
@@ -49,7 +75,7 @@ export async function getSupervisors() {
     .select("email, name, embedding_bert_768");
 
   if (error) {
-    console.error(error);
+    throw Error("No supervisors found");
   }
 
   if (!embeddings || embeddings.length === 0) {

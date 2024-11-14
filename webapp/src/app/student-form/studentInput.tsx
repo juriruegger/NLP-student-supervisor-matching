@@ -12,18 +12,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { storeStudent } from "../actions";
+import { storeSuggestions } from "./actions";
 
 const formSchema = z.object({
-  name: z
-    .string()
-    .min(2, { message: "Name must be at least two characters" })
-    .max(50, { message: "Name must be no longer than 50 characters" }),
-  email: z.string().email(),
   text: z
     .string()
     .min(10, { message: "Your submission must be at least 10 characters" })
@@ -39,49 +33,18 @@ export function StudentInput() {
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
-    storeStudent(data.name, data.email, data.text);
+    storeSuggestions(data.text);
 
     toast({
-      title: `Form submitted, ${data.name}`,
+      title: `Form submitted`,
     });
 
-    router.push(`/suggestions?email=${data.email}`);
+    router.push(`/suggestions`);
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Student" {...field} className="w-full" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="student@itu.dk"
-                  {...field}
-                  className="w-full"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="text"
@@ -99,7 +62,6 @@ export function StudentInput() {
             </FormItem>
           )}
         />
-
         <Button type="submit">Submit</Button>
       </form>
     </Form>
