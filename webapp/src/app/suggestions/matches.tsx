@@ -12,7 +12,7 @@ type MatchesProps = {
 
 export default function Matches({ suggestions }: MatchesProps) {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-8">
       <h1 className="text-3xl font-bold mb-8">{content.suggestions.title}</h1>
       <div className="space-y-6">
         {suggestions.map((supervisor, index) => (
