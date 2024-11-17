@@ -1,27 +1,28 @@
 from flask import Flask, request, jsonify
 import numpy as np
-from transformers import BertTokenizer, BertModel, pipeline
+from transformers import BertTokenizer, BertModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
 
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertModel.from_pretrained('bert-base-uncased')
-
 @app.route('/api', methods=['POST'])
 def api():
     text = request.get_json().get('text')
     supervisors = request.get_json().get('supervisors')
+    bert_model = request.get_json().get('model')
 
     if not text or not supervisors:
         return jsonify({'error': 'Invalid input data'}), 400
 
-    embedding = get_embedding(str(text))
+    embedding = get_embedding(str(text), str(bert_model))
     suggestions = calculate_suggestions(embedding, supervisors)
     return jsonify(suggestions)
 
-def get_embedding(sentence):
+def get_embedding(sentence, bert_model):
+        tokenizer = BertTokenizer.from_pretrained(bert_model)
+        model = BertModel.from_pretrained(bert_model)
+        
         inputs = tokenizer(sentence, return_tensors='pt', truncation=False, padding=True)
         with torch.no_grad():
             outputs = model(**inputs)

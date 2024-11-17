@@ -84,3 +84,35 @@ export async function getSupervisors() {
 
   return embeddings;
 }
+
+export async function setModel(model: string) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw Error("No user found");
+  }
+  const { data, error } = await supabase
+    .from("new_students")
+    .upsert({ userId: userId, model: model })
+    .select();
+
+  if (error) {
+    throw Error("Failed to set model");
+  }
+
+  return data;
+}
+
+export async function getModel(): Promise<string> {
+  const { userId } = await auth();
+  const { data: model, error } = await supabase
+    .from("new_students")
+    .select("model")
+    .eq("userId", `${userId}`)
+    .single();
+
+  if (error) {
+    throw Error("There was an error fetching the model for the student");
+  }
+
+  return model.model ?? "bert";
+}

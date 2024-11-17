@@ -19,7 +19,7 @@ export const content = {
     match you with the most suitable supervisor.`,
   },
   suggestions: {
-    title: `Results`,
+    title: `Suggestions`,
     description: `Based on the information you provided, here are the supervisors that best match your research interests. 
     You can review their profiles and select the one that you feel is the best fit for your project.`,
   },

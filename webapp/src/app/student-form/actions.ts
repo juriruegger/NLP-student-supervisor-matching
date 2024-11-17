@@ -1,6 +1,6 @@
 "use server";
 
-import { getSupervisors, setStudent } from "@/db";
+import { getModel, getSupervisors, setStudent } from "@/db";
 import { auth } from "@clerk/nextjs/server";
 
 export async function storeSuggestions(text: string) {
@@ -10,12 +10,16 @@ export async function storeSuggestions(text: string) {
   }
   const supervisors = await getSupervisors();
 
+  const dbmodel = await getModel();
+  const bertModel = await modelSwitch(dbmodel);
+
   const res = await fetch("http://127.0.0.1:5000/api", {
+    cache: "no-store",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text, supervisors }),
+    body: JSON.stringify({ text, supervisors, bertModel }),
   });
 
   if (!res.ok) {
@@ -30,3 +34,14 @@ export async function storeSuggestions(text: string) {
 
   await setStudent(text, topThree);
 }
+
+const modelSwitch = async (model: string) => {
+  switch (model) {
+    case "bert":
+      return "bert-base-uncased";
+    case "scibert":
+      return "allenai/scibert_scivocab_uncased";
+    default:
+      throw new Error("Unknown model");
+  }
+};

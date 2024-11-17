@@ -6,7 +6,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import { Card } from "@/components/ui/card";
 import { ModeToggle } from "@/components/ui/mode-toggle";
-import { ClerkProvider, SignedIn, SignedOut } from "@clerk/nextjs";
+import { ClerkProvider, SignedIn } from "@clerk/nextjs";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "SSM",
@@ -16,11 +17,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Layout({
+export default async function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar:state")?.value === "true";
+
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
@@ -32,7 +36,7 @@ export default function Layout({
             disableTransitionOnChange
           >
             <SignedIn>
-              <SidebarProvider>
+              <SidebarProvider defaultOpen={defaultOpen}>
                 <AppSidebar />
                 <div className="grow">
                   <Card className="md:m-2 p-6 bg-backgroundCard grow">
