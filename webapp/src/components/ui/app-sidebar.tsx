@@ -19,6 +19,8 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 import Image from "next/image";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
 
 // Menu items.
 const items = [
@@ -47,7 +49,8 @@ const settings = [
   },
 ];
 
-export function AppSidebar() {
+export async function AppSidebar() {
+  const user = await currentUser();
   return (
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader />
@@ -87,32 +90,14 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <Image
-                    src="https://i.ibb.co/ScNdszb/animal-abstract1.webp"
-                    alt="realistic-animal2"
-                    className="rounded-full mr-2"
-                    width={32}
-                    height={32}
-                  />
-                  Student
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                className="w-[--radix-popper-anchor-width]"
-              >
-                <DropdownMenuItem>
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <SignedOut>
+          <SignInButton />
+        </SignedOut>
+        <SignedIn>
+          <div className="flex px-1">
+            <UserButton />
+          </div>
+        </SignedIn>
       </SidebarFooter>
     </Sidebar>
   );
