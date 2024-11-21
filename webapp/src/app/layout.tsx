@@ -40,12 +40,12 @@ export default async function Layout({
                 <AppSidebar />
                 <div className="grow">
                   <Card className="md:m-2 p-6 bg-backgroundCard grow">
-                    <div className="relative h-screen">
+                    <div className="relative min-h-screen">
                       <div className="sticky top-4 left-0 z-10 flex justify-between w-full px-4">
                         <SidebarTrigger className="mt-1.5" />
                         <ModeToggle />
                       </div>
-                      <div className="pt-12 px-4 md:px-12 lg:px-24 xl:px-52 transition-all ease-out">
+                      <div className="pt-12 pb-20 px-4 md:px-12 lg:px-24 xl:px-52 transition-all ease-out">
                         {children}
                       </div>
                     </div>

@@ -6,7 +6,10 @@ export default async function Page() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Settings</h1>
-      <Model model={bertModel} />
+      <div className="space-y-2">
+        <p>Model</p>
+        <Model model={bertModel} />
+      </div>
     </div>
   );
 }

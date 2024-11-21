@@ -1,9 +1,30 @@
 "use server";
 
-import { getSuggestions } from "@/db";
+import { getSuggestions, setContacted } from "@/db";
+import { fetchImage } from "@/utils/fetcher";
 
 export async function getUserSuggestions() {
-  const suggestions = getSuggestions();
+  const suggestions = await getSuggestions();
 
-  return suggestions;
+  const sortedSuggestions = suggestions.sort(
+    (a, b) => b.similarity - a.similarity,
+  );
+
+  const suggestionsWithImage = await Promise.all(
+    // we are fetching the supervisor images from Pure.
+    sortedSuggestions.map(async (suggestion) => {
+      if (suggestion.supervisors.image_url) {
+        suggestion.supervisors.image_url = await fetchImage(
+          suggestion.supervisors.image_url,
+        );
+      }
+      return suggestion;
+    }),
+  );
+
+  return suggestionsWithImage;
+}
+
+export async function contactSupervisor(supervisor: string) {
+  await setContacted(supervisor);
 }

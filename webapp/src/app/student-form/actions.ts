@@ -1,6 +1,12 @@
 "use server";
 
-import { getModel, getSupervisors, setStudent } from "@/db";
+import {
+  deleteStudentSupervisors,
+  getModel,
+  getSupervisors,
+  setStudent,
+  setStudentSupervisor,
+} from "@/db";
 import { auth } from "@clerk/nextjs/server";
 
 export async function storeSuggestions(text: string) {
@@ -8,10 +14,11 @@ export async function storeSuggestions(text: string) {
   if (!userId) {
     throw Error("No user found");
   }
-  const supervisors = await getSupervisors();
 
-  const dbmodel = await getModel();
-  const bertModel = await modelSwitch(dbmodel);
+  await deleteStudentSupervisors();
+
+  const supervisors = await getSupervisors();
+  const model = await getModel();
 
   const res = await fetch("http://127.0.0.1:5000/api", {
     cache: "no-store",
@@ -19,7 +26,7 @@ export async function storeSuggestions(text: string) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text, supervisors, bertModel }),
+    body: JSON.stringify({ text, supervisors, model }),
   });
 
   if (!res.ok) {
@@ -27,21 +34,15 @@ export async function storeSuggestions(text: string) {
   }
 
   const suggestions = await res.json();
+  const topThree = await suggestions.slice(0, 5);
 
-  const topThree = await suggestions
-    .slice(0, 3)
-    .map((suggestion: { supervisor: string }) => suggestion.supervisor);
+  await setStudent(text);
 
-  await setStudent(text, topThree);
-}
-
-const modelSwitch = async (model: string) => {
-  switch (model) {
-    case "bert":
-      return "bert-base-uncased";
-    case "scibert":
-      return "allenai/scibert_scivocab_uncased";
-    default:
-      throw new Error("Unknown model");
+  for (const suggestion of topThree) {
+    await setStudentSupervisor(
+      suggestion.supervisor,
+      suggestion.email,
+      suggestion.similarity,
+    );
   }
-};
+}
