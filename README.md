@@ -1,5 +1,5 @@
 ## Running the app
-Please remember to install the correct dependencies based on the `requirements.txt` in the backend and `pnpm install` for the frontend.
+Please remember to install the correct dependencies based on the `requirements.txt` in the backend and `pnpm install` for the frontend (navigate to the correct subfolder first).
 
 You will need to add a `.env.local` file to the top of the webapp folder with the following variables as this is not being updated automatically with pnpm:
 
