@@ -12,14 +12,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./dropdown-menu";
-import Image from "next/image";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { NavUser } from "./nav-user";
 import { currentUser } from "@clerk/nextjs/server";
 
 // Menu items.
@@ -51,6 +44,7 @@ const settings = [
 
 export async function AppSidebar() {
   const user = await currentUser();
+
   return (
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader />
@@ -90,14 +84,10 @@ export async function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SignedOut>
-          <SignInButton />
-        </SignedOut>
-        <SignedIn>
-          <div className="flex px-1">
-            <UserButton />
-          </div>
-        </SignedIn>
+        <NavUser
+          username={user?.fullName}
+          userEmail={user?.primaryEmailAddress?.emailAddress}
+        />
       </SidebarFooter>
     </Sidebar>
   );

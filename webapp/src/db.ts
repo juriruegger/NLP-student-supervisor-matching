@@ -1,35 +1,17 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { createClient } from "@supabase/supabase-js";
+import { Suggestions } from "./lib/types";
+import { supabase } from "./utils/utils";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl) {
-  throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_URL");
-}
-
-if (!supabaseKey) {
-  throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY");
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  global: {
-    fetch: (url, options = {}) => {
-      return fetch(url, { ...options, cache: "no-store" });
-    },
-  },
-});
-
-export async function setStudent(text: string, suggestions: string[]) {
+export async function setStudent(text: string) {
   const { userId } = await auth();
   if (!userId) {
     throw Error("No user found");
   }
   const { data, error } = await supabase
     .from("new_students")
-    .upsert({ userId: userId, text: text, suggestions: suggestions })
+    .upsert({ userId: userId, text: text })
     .select();
 
   if (error) {
@@ -41,45 +23,35 @@ export async function setStudent(text: string, suggestions: string[]) {
 
 export async function getSuggestions() {
   const { userId } = await auth();
-  const { data: student, error } = await supabase
-    .from("new_students")
-    .select("suggestions")
-    .eq("userId", `${userId}`)
-    .single();
+  const { data: suggestions, error } = await supabase
+    .from("student_supervisor")
+    .select(
+      `similarity, 
+      contacted, 
+      supervisors(
+        name,
+        email,
+        organisational_units, 
+        image_url
+      )`,
+    )
+    .eq("student_id", userId);
 
   if (error) {
-    throw Error("here was an error fetching the suggestions for the student");
+    throw Error("No suggestions found");
   }
 
-  const toReturn = [];
-
-  for (const suggestion of student?.suggestions) {
-    const { data: supervisor, error } = await supabase
-      .from("supervisors")
-      .select("name, email")
-      .eq("name", `${suggestion}`)
-      .single();
-
-    if (error) {
-      throw Error("There was an error fetching the suggestions");
-    }
-    toReturn.push(supervisor);
-  }
-
-  return toReturn;
+  return suggestions as unknown as Suggestions; // very hacky
 }
 
 export async function getSupervisors() {
+  const model = await getModel();
   const { data: embeddings, error } = await supabase
     .from("supervisors")
-    .select("email, name, embedding_bert_768");
+    .select(`email, name, embedding_${model}_768`);
 
   if (error) {
     throw Error("No supervisors found");
-  }
-
-  if (!embeddings || embeddings.length === 0) {
-    console.log("No embeddings found");
   }
 
   return embeddings;
@@ -115,4 +87,80 @@ export async function getModel(): Promise<string> {
   }
 
   return model.model ?? "bert";
+}
+
+export async function setContacted(supervisorName: string) {
+  const { userId } = await auth();
+
+  console.log(userId);
+  console.log(supervisorName);
+
+  const { data, error } = await supabase
+    .from("student_supervisor")
+    .upsert({
+      student_id: userId,
+      supervisor_name: supervisorName,
+      contacted: true,
+    })
+    .select();
+
+  if (error) {
+    console.log(error);
+    throw Error("Failed to set contacted");
+  }
+
+  return data;
+}
+
+export async function setStudentSupervisor(
+  supervisorName: string,
+  supervisorEmail: string,
+  similarity: number,
+) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("No user found");
+  }
+  const { data, error } = await supabase
+    .from("student_supervisor")
+    .upsert({
+      student_id: userId,
+      supervisor_name: supervisorName,
+      similarity: similarity,
+    })
+    .select();
+
+  if (error) {
+    throw Error("Failed to set similarity score");
+  }
+
+  return data;
+}
+
+export async function deleteStudentSupervisors() {
+  const { userId } = await auth();
+  console.log("userId", userId);
+  if (!userId) {
+    throw new Error("No user found");
+  }
+
+  const { data, error } = await supabase
+    .from("student_supervisor")
+    .delete()
+    .eq("student_id", userId)
+    .select();
+
+  if (error) {
+    throw Error("Failed to delete supervisors");
+  }
+
+  return { data };
+}
+
+export async function getUserId() {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("No user found");
+  }
+  return userId;
 }
