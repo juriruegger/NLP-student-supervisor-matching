@@ -39,10 +39,6 @@ export async function storeSuggestions(text: string) {
   await setStudent(text);
 
   for (const suggestion of topSuggestions) {
-    await setStudentSupervisor(
-      suggestion.supervisor,
-      suggestion.email,
-      suggestion.similarity,
-    );
+    await setStudentSupervisor(suggestion.supervisor, suggestion.similarity);
   }
 }

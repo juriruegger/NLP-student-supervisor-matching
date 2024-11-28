@@ -13,9 +13,9 @@ export async function getUserSuggestions() {
   const suggestionsWithImage = await Promise.all(
     // we are fetching the supervisor images from Pure.
     sortedSuggestions.map(async (suggestion) => {
-      if (suggestion.supervisors.image_url) {
-        suggestion.supervisors.image_url = await fetchImage(
-          suggestion.supervisors.image_url,
+      if (suggestion.supervisor.image_url) {
+        suggestion.supervisor.image_url = await fetchImage(
+          suggestion.supervisor.image_url,
         );
       }
       return suggestion;

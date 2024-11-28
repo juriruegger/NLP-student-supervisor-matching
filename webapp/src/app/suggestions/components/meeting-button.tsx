@@ -17,10 +17,10 @@ export function MeetingButton({ suggestion }: MeetingButtonProps) {
   };
   return (
     <a
-      href={`mailto:${suggestion.supervisors.email}?subject=Research%20Project%20Meeting`}
+      href={`mailto:${suggestion.supervisor.email}?subject=Research%20Project%20Meeting`}
     >
       <Button
-        onClick={() => onClick(suggestion.supervisors.name)}
+        onClick={() => onClick(suggestion.supervisor.name)}
         variant="secondary"
       >
         Send an email
