@@ -61,15 +61,15 @@ export default function Matches({ suggestions, user }: MatchesProps) {
             className="flex flex-col sm:flex-row items-center justify-between bg-card rounded-lg p-6 shadow-sm"
           >
             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-4 sm:mb-0">
-              {suggestion.supervisors.image_url ? (
+              {suggestion.supervisor.image_url ? (
                 <ProfileImage
-                  src={suggestion.supervisors.image_url}
-                  name={suggestion.supervisors.name}
+                  src={suggestion.supervisor.image_url}
+                  name={suggestion.supervisor.name}
                 />
               ) : (
                 <ProfileImage
                   src="https://i.ibb.co/4YRNjF3/Profile-Picture.webp"
-                  name={suggestion.supervisors.name}
+                  name={suggestion.supervisor.name}
                 />
               )}
               <div className="flex flex-col items-center sm:items-start">
@@ -77,14 +77,14 @@ export default function Matches({ suggestions, user }: MatchesProps) {
                   <Tooltip>
                     <TooltipTrigger>
                       <h2 className="text-xl font-bold text-center sm:text-left">
-                        {suggestion.supervisors.name}
+                        {suggestion.supervisor.name}
                       </h2>
                     </TooltipTrigger>
                     <TooltipContent>{suggestion.similarity}</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <p className="text-sm text-gray-500">
-                  {suggestion.supervisors.organisational_units}
+                  {suggestion.supervisor.organisational_units}
                 </p>
               </div>
             </div>

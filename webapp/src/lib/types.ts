@@ -8,7 +8,7 @@ export type Supervisor = {
 export type Suggestion = {
   similarity: number;
   contacted: boolean;
-  supervisors: Supervisor;
+  supervisor: Supervisor;
 };
 
 export type Suggestions = Suggestion[];

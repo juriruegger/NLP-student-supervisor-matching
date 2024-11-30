@@ -12,8 +12,7 @@ export function ProfileImage({ src, name }: ProfileImageProps) {
         src={src}
         alt={name ?? "Profile image"}
         fill={true}
-        objectFit="cover"
-        className="rounded-full"
+        className="rounded-full object-cover"
       />
     </div>
   );

@@ -10,8 +10,8 @@ export async function setStudent(text: string) {
     throw Error("No user found");
   }
   const { data, error } = await supabase
-    .from("new_students")
-    .upsert({ userId: userId, text: text })
+    .from("student")
+    .upsert({ user_id: userId, text: text })
     .select();
 
   if (error) {
@@ -28,7 +28,7 @@ export async function getSuggestions() {
     .select(
       `similarity, 
       contacted, 
-      supervisors(
+      supervisor(
         name,
         email,
         organisational_units, 
@@ -47,7 +47,7 @@ export async function getSuggestions() {
 export async function getSupervisors() {
   const model = await getModel();
   const { data: embeddings, error } = await supabase
-    .from("supervisors")
+    .from("supervisor")
     .select(`email, name, embedding_${model}_768`);
 
   if (error) {
@@ -63,8 +63,8 @@ export async function setModel(model: string) {
     throw Error("No user found");
   }
   const { data, error } = await supabase
-    .from("new_students")
-    .upsert({ userId: userId, model: model })
+    .from("student")
+    .upsert({ user_id: userId, model: model })
     .select();
 
   if (error) {
@@ -77,9 +77,9 @@ export async function setModel(model: string) {
 export async function getModel(): Promise<string> {
   const { userId } = await auth();
   const { data: model, error } = await supabase
-    .from("new_students")
+    .from("student")
     .select("model")
-    .eq("userId", `${userId}`)
+    .eq("user_id", `${userId}`)
     .single();
 
   if (error) {
@@ -92,9 +92,6 @@ export async function getModel(): Promise<string> {
 export async function setContacted(supervisorName: string) {
   const { userId } = await auth();
 
-  console.log(userId);
-  console.log(supervisorName);
-
   const { data, error } = await supabase
     .from("student_supervisor")
     .upsert({
@@ -105,7 +102,6 @@ export async function setContacted(supervisorName: string) {
     .select();
 
   if (error) {
-    console.log(error);
     throw Error("Failed to set contacted");
   }
 
@@ -114,7 +110,6 @@ export async function setContacted(supervisorName: string) {
 
 export async function setStudentSupervisor(
   supervisorName: string,
-  supervisorEmail: string,
   similarity: number,
 ) {
   const { userId } = await auth();
@@ -139,7 +134,6 @@ export async function setStudentSupervisor(
 
 export async function deleteStudentSupervisors() {
   const { userId } = await auth();
-  console.log("userId", userId);
   if (!userId) {
     throw new Error("No user found");
   }
