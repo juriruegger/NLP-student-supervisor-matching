@@ -1,4 +1,5 @@
 export type Supervisor = {
+  uuid: string;
   email: string;
   name: string;
   image_url?: string;

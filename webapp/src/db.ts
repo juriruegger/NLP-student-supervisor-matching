@@ -29,6 +29,7 @@ export async function getSuggestions() {
       `similarity, 
       contacted, 
       supervisor(
+        uuid,
         name,
         email,
         organisational_units, 
@@ -48,7 +49,7 @@ export async function getSupervisors() {
   const model = await getModel();
   const { data: embeddings, error } = await supabase
     .from("supervisor")
-    .select(`email, name, embedding_${model}_768`);
+    .select(`uuid, email, name, embedding_${model}_768`);
 
   if (error) {
     throw Error("No supervisors found");
@@ -82,34 +83,30 @@ export async function getModel(): Promise<string> {
     .eq("user_id", `${userId}`)
     .single();
 
-  if (error) {
-    throw Error("There was an error fetching the model for the student");
+  if (!model || error) {
+    return "scibert";
   }
-
-  return model.model ?? "bert";
+  return model.model;
 }
 
-export async function setContacted(supervisorName: string) {
+export async function setContacted(supervisorId: string) {
   const { userId } = await auth();
 
-  const { data, error } = await supabase
-    .from("student_supervisor")
-    .upsert({
-      student_id: userId,
-      supervisor_name: supervisorName,
-      contacted: true,
-    })
-    .select();
+  const { data, error } = await supabase.from("student_supervisor").upsert({
+    student_id: userId,
+    supervisor_id: supervisorId,
+    contacted: true,
+  });
 
   if (error) {
-    throw Error("Failed to set contacted");
+    throw Error("Failed to set contacted", error);
   }
 
   return data;
 }
 
 export async function setStudentSupervisor(
-  supervisorName: string,
+  supervisorId: string,
   similarity: number,
 ) {
   const { userId } = await auth();
@@ -120,7 +117,7 @@ export async function setStudentSupervisor(
     .from("student_supervisor")
     .upsert({
       student_id: userId,
-      supervisor_name: supervisorName,
+      supervisor_id: supervisorId,
       similarity: similarity,
     })
     .select();
