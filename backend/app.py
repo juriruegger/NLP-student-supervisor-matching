@@ -53,7 +53,7 @@ def calculate_suggestions(embedding, supervisors, model):
 
         similarity = cosine_similarity(embedding, supervisor_embedding)[0][0]
         similarities.append({
-            'supervisor': supervisor.get('name'),
+            'supervisor': supervisor.get('uuid'),
             'email': supervisor.get('email', 'Email not provided'),
             'similarity': similarity
         })
