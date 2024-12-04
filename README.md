@@ -18,3 +18,7 @@ PURE_API=7624b829-efa4-4b7f-8e3d-4fcb295bd819`
 `cd webapp` -> `pnpm dev`
 
 
+## Setup
+The prototype uses shadcn/ui for components, tailwind for styling, and is built on the next.js app router architecture.
+
+
