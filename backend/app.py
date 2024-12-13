@@ -2,8 +2,8 @@ from flask import Flask, request, jsonify
 import numpy as np
 from transformers import BertTokenizer, BertModel
 import torch
-from sklearn.metrics.pairwise import cosine_similarity
 import torch.nn.functional as F
+#from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
 
