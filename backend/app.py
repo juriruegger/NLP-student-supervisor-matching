@@ -2,8 +2,7 @@ from flask import Flask, request, jsonify
 import numpy as np
 from transformers import BertTokenizer, BertModel
 import torch
-import torch.nn.functional as F
-#from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
 
@@ -52,7 +51,7 @@ def calculate_suggestions(embedding, supervisors, model):
         if embedding.shape[1] != supervisor_embedding.shape[1]:
             continue
 
-        similarity = F.cosine_similarity(embedding, supervisor_embedding, dim=0).item()
+        similarity = cosine_similarity(embedding, supervisor_embedding).item()
 
         similarities.append({
             'supervisor': supervisor.get('uuid'),
