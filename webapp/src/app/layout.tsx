@@ -10,11 +10,8 @@ import { ClerkProvider, SignedIn } from "@clerk/nextjs";
 import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
-  title: "SSM",
+  title: "SupervisorMatch",
   description: "An application to match students with supervisors",
-  icons: {
-    icon: "https://i.ibb.co/q0vwRGg/realistic-animal2.webp",
-  },
 };
 
 export default async function Layout({
