@@ -1,36 +1,36 @@
 from flask import Flask, request, jsonify
 import numpy as np
-from transformers import BertTokenizer, BertModel
+from transformers import AutoModel, AutoTokenizer
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
 
+model_id = "answerdotai/ModernBERT-base"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModel.from_pretrained(model_id)
+
 @app.route('/api', methods=['POST'])
 def api():
-    text = request.get_json().get('text')
-    supervisors = request.get_json().get('supervisors')
-    bert_model = request.get_json().get('model')
+    data = request.get_json()
+    text = data.get('text')
+    supervisors = data.get('supervisors')
 
     if not text or not supervisors:
         return jsonify({'error': 'Invalid input data'}), 400
 
-    embedding = get_embedding(str(text), str(bert_model))
-    suggestions = calculate_suggestions(embedding, supervisors, bert_model)
+    embedding = get_embedding(str(text))
+    suggestions = calculate_suggestions(embedding, supervisors)
     return jsonify(suggestions)
 
-def get_embedding(sentence, bert_model):
-    full_model = model_switch(bert_model)
-    tokenizer = BertTokenizer.from_pretrained(full_model)
-    model = BertModel.from_pretrained(full_model)
-    
-    inputs = tokenizer(sentence, max_length=512, padding="max_length", truncation=True, return_tensors="pt")
+def get_embedding(sentence):
+    inputs = tokenizer(sentence, max_length=8192, truncation=True, return_tensors="pt")
     with torch.no_grad():
         outputs = model(**inputs)
     embedding = torch.mean(outputs.last_hidden_state * inputs["attention_mask"].unsqueeze(-1), dim=1).squeeze()
     return embedding
 
-def calculate_suggestions(embedding, supervisors, model):
+def calculate_suggestions(embedding, supervisors):
     similarities = []
 
     # Ensure `embedding` is 2D
@@ -38,7 +38,7 @@ def calculate_suggestions(embedding, supervisors, model):
         embedding = embedding.reshape(1, -1)
 
     for supervisor in supervisors:
-        embedding_str_list = supervisor.get(f'embedding_{model}_768', [])
+        embedding_str_list = supervisor.get(f'embedding', [])
 
         if not embedding_str_list:
             continue
@@ -61,16 +61,7 @@ def calculate_suggestions(embedding, supervisors, model):
 
     similarities.sort(key=lambda x: x['similarity'], reverse=True)
 
-    return similarities
-
-def model_switch(model):
-    match model:
-        case 'bert':
-            return 'bert-base-uncased'
-        case 'scibert':
-            return 'allenai/scibert_scivocab_uncased'
-        case _:
-            raise ValueError('Unknown model')
+    return similarities[:5]
 
 if __name__ == '__main__':
     app.run(debug=True)
