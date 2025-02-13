@@ -15,6 +15,9 @@ import { useRouter } from "next/navigation";
 import Loading from "./loading";
 import { supabase } from "@/utils/utils";
 import { ProfileImage } from "./components/profile-image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { File } from "lucide-react";
 
 type MatchesProps = {
   suggestions: Suggestion[];
@@ -61,31 +64,60 @@ export default function Matches({ suggestions, user }: MatchesProps) {
             className="flex flex-col sm:flex-row items-center justify-between bg-card rounded-lg p-6 shadow-sm"
           >
             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-4 sm:mb-0">
-              {suggestion.supervisor.image_url ? (
+              {suggestion.imageUrl ? (
                 <ProfileImage
-                  src={suggestion.supervisor.image_url}
-                  name={suggestion.supervisor.name}
+                  src={suggestion.imageUrl}
+                  name={suggestion.name}
                 />
               ) : (
                 <ProfileImage
                   src="https://i.ibb.co/4YRNjF3/Profile-Picture.webp"
-                  name={suggestion.supervisor.name}
+                  name={suggestion.name}
                 />
               )}
-              <div className="flex flex-col items-center sm:items-start">
+              <div className="flex flex-col items-center sm:items-start space-y-2">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
                       <h2 className="text-xl font-bold text-center sm:text-left">
-                        {suggestion.supervisor.name}
+                        {suggestion.name}
                       </h2>
                     </TooltipTrigger>
                     <TooltipContent>{suggestion.similarity}</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <p className="text-sm text-gray-500">
-                  {suggestion.supervisor.organisational_units}
-                </p>
+                <div className="text-sm text-gray-500">
+                  <p>Organisations:</p>
+                  <p>
+                    {suggestion.organisationalUnits.map((unit, index) => (
+                      <span key={index}>
+                        <a
+                          href={unit.url}
+                          className="hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {unit.name}
+                        </a>
+                        {index < suggestion.organisationalUnits.length - 1
+                          ? " • "
+                          : ""}
+                      </span>
+                    ))}
+                  </p>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">
+                    <p>Keywords:</p>
+                    <p>{suggestion.keywords.join(", ")}</p>
+                  </div>
+                </div>
+                <Button variant={"outline"}>
+                  <File />
+                  <Link href={suggestion.topPaper?.url}>
+                    {suggestion.topPaper?.title}
+                  </Link>
+                </Button>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 sm:ml-8">

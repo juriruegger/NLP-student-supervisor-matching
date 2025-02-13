@@ -2,8 +2,6 @@
 
 import {
   deleteStudentSupervisors,
-  getModel,
-  getSupervisors,
   setStudent,
   setStudentSupervisor,
 } from "@/db";
@@ -15,10 +13,7 @@ export async function storeSuggestions(text: string) {
     throw Error("No user found");
   }
 
-  await deleteStudentSupervisors();
-
-  const supervisors = await getSupervisors();
-  const model = await getModel();
+  await deleteStudentSupervisors(userId);
 
   const res = await fetch("http://127.0.0.1:5000/api", {
     cache: "no-store",
@@ -26,7 +21,7 @@ export async function storeSuggestions(text: string) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text, supervisors, model }),
+    body: JSON.stringify({ text }),
   });
 
   if (!res.ok) {
@@ -35,10 +30,13 @@ export async function storeSuggestions(text: string) {
 
   const suggestions = await res.json();
   const topSuggestions = await suggestions.slice(0, 5);
-
   await setStudent(text);
 
   for (const suggestion of topSuggestions) {
-    await setStudentSupervisor(suggestion.supervisor, suggestion.similarity);
+    await setStudentSupervisor(
+      suggestion.supervisor,
+      suggestion.similarity,
+      suggestion.top_paper,
+    );
   }
 }

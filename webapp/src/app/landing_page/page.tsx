@@ -10,9 +10,21 @@ const LandingPage = () => {
           <h1 className="text-2xl font-bold">SaaSify</h1>
           <nav>
             <ul className="flex space-x-4">
-              <li><a href="#features" className="hover:underline">Features</a></li>
-              <li><a href="#pricing" className="hover:underline">Pricing</a></li>
-              <li><a href="#contact" className="hover:underline">Contact</a></li>
+              <li>
+                <a href="#features" className="hover:underline">
+                  Features
+                </a>
+              </li>
+              <li>
+                <a href="#pricing" className="hover:underline">
+                  Pricing
+                </a>
+              </li>
+              <li>
+                <a href="#contact" className="hover:underline">
+                  Contact
+                </a>
+              </li>
             </ul>
           </nav>
         </div>
@@ -21,8 +33,13 @@ const LandingPage = () => {
       <main className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <section className="text-center py-16">
-          <h2 className="text-4xl font-bold mb-4">Boost Your Productivity with SaaSify</h2>
-          <p className="text-gray-600 mb-6">Streamline your business operations with our powerful tools and integrations.</p>
+          <h2 className="text-4xl font-bold mb-4">
+            Boost Your Productivity with SaaSify
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Streamline your business operations with our powerful tools and
+            integrations.
+          </p>
           <Button className="text-xl px-6 py-3">Get Started</Button>
         </section>
 
@@ -33,19 +50,25 @@ const LandingPage = () => {
             <Card>
               <CardContent>
                 <h4 className="font-bold text-xl">Feature One</h4>
-                <p className="text-gray-600">Description of feature one that highlights its value.</p>
+                <p className="text-gray-600">
+                  Description of feature one that highlights its value.
+                </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent>
                 <h4 className="font-bold text-xl">Feature Two</h4>
-                <p className="text-gray-600">Description of feature two that makes it unique.</p>
+                <p className="text-gray-600">
+                  Description of feature two that makes it unique.
+                </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent>
                 <h4 className="font-bold text-xl">Feature Three</h4>
-                <p className="text-gray-600">Description of feature three and its benefits.</p>
+                <p className="text-gray-600">
+                  Description of feature three and its benefits.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -98,7 +121,9 @@ const LandingPage = () => {
               rows={4}
               className="w-full px-4 py-2 border rounded-md"
             ></textarea>
-            <Button type="submit" className="w-full">Submit</Button>
+            <Button type="submit" className="w-full">
+              Submit
+            </Button>
           </form>
         </section>
       </main>

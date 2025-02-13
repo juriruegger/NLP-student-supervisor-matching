@@ -1,9 +1,10 @@
 "use server";
 
 import { getSuggestions, setContacted } from "@/db";
+import { Suggestions } from "@/lib/types";
 import { fetchImage } from "@/utils/fetcher";
 
-export async function getUserSuggestions() {
+export async function getUserSuggestions(): Promise<Suggestions> {
   const suggestions = await getSuggestions();
 
   const sortedSuggestions = suggestions.sort(
@@ -13,10 +14,8 @@ export async function getUserSuggestions() {
   const suggestionsWithImage = await Promise.all(
     // we are fetching the supervisor images from Pure.
     sortedSuggestions.map(async (suggestion) => {
-      if (suggestion.supervisor.image_url) {
-        suggestion.supervisor.image_url = await fetchImage(
-          suggestion.supervisor.image_url,
-        );
+      if (suggestion.imageUrl) {
+        suggestion.imageUrl = await fetchImage(suggestion.imageUrl);
       }
       return suggestion;
     }),

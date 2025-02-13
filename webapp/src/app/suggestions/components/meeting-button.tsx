@@ -16,13 +16,8 @@ export function MeetingButton({ suggestion }: MeetingButtonProps) {
     router.refresh();
   };
   return (
-    <a
-      href={`mailto:${suggestion.supervisor.email}?subject=Research%20Project%20Meeting`}
-    >
-      <Button
-        onClick={() => onClick(suggestion.supervisor.uuid)}
-        variant="secondary"
-      >
+    <a href={`mailto:${suggestion.email}?subject=Research%20Project%20Meeting`}>
+      <Button onClick={() => onClick(suggestion.uuid)} variant="secondary">
         Send an email
       </Button>
     </a>
