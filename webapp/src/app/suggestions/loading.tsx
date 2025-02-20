@@ -1,20 +1,16 @@
-import { content } from "@/lib/content";
-import React from "react";
+import type React from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MatchesSkeleton: React.FC = () => {
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">{content.suggestions.title}</h1>
-      <div className="mt-12 flex flex-col space-y-12">
+    <div className="container mx-auto px-4 space-y-8">
+      <header className="mb-12 text-center">
+        <Skeleton className="h-20 w-full max-w-2xl mx-auto mb-4 rounded-2xl" />
+        <Skeleton className="h-12 w-full max-w-2xl mx-auto rounded-2xl" />
+      </header>
+      <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, index) => (
-          <div key={index} className="flex items-center space-x-6 w-full">
-            <div className="rounded-full bg-gray-300 w-24 h-24 animate-pulse"></div>
-            <div>
-              <div className="bg-gray-300 rounded-md w-56 h-6 mb-2 animate-pulse"></div>
-              <div className="bg-gray-300 rounded-md w-96 h-12 animate-pulse"></div>
-            </div>
-            <div className="bg-gray-300 rounded-md w-36 h-10 animate-pulse"></div>
-          </div>
+          <Skeleton key={index} className="w-full h-32 rounded-2xl" />
         ))}
       </div>
     </div>

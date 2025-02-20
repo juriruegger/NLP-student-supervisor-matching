@@ -3,17 +3,19 @@
 import { Button } from "@/components/ui/button";
 import { contactSupervisor } from "../actions";
 import { Suggestion } from "@/lib/types";
-import { useRouter } from "next/navigation";
 
 type MeetingButtonProps = {
   suggestion: Suggestion;
+  setContacted: (contacted: boolean) => void;
 };
 
-export function MeetingButton({ suggestion }: MeetingButtonProps) {
-  const router = useRouter();
+export function MeetingButton({
+  suggestion,
+  setContacted,
+}: MeetingButtonProps) {
   const onClick = (supervisor: string) => {
     contactSupervisor(supervisor);
-    router.refresh();
+    setContacted(true);
   };
   return (
     <a href={`mailto:${suggestion.email}?subject=Research%20Project%20Meeting`}>
