@@ -1,8 +1,8 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { Suggestions } from "./lib/types";
 import { supabase } from "./utils/utils";
+import { KeyWords, OrganisationalUnit, OrganisationalUnits, Suggestions, TopPaper } from "./lib/types";
 
 export async function setStudent(text: string) {
   const { userId } = await auth();
@@ -21,41 +21,131 @@ export async function setStudent(text: string) {
   return data;
 }
 
-export async function getSuggestions() {
+export async function getSuggestions(): Promise<Suggestions> {
   const { userId } = await auth();
   const { data: suggestions, error } = await supabase
     .from("student_supervisor")
     .select(
       `similarity, 
       contacted, 
-      supervisor(
-        uuid,
-        name,
-        email,
-        organisational_units, 
-        image_url
-      )`,
+      supervisor_id,
+      top_paper
+      `,
     )
     .eq("student_id", userId);
 
   if (error) {
-    throw Error("No suggestions found");
+    throw Error("No suggestions found", error);
   }
 
-  return suggestions as unknown as Suggestions; // very hacky
+  const supervisors: Suggestions = [];
+  for (const suggestion of suggestions) {
+    const researcher = await getPerson(suggestion.supervisor_id);
+    const name = researcher.name?.firstName + " " + researcher.name?.lastName;
+    const imageUrl = researcher.profilePhotos?.[0]?.url ?? "";
+
+    const organisationSet = new Set<OrganisationalUnit>();
+    const associations = researcher.staffOrganizationAssociations || [];
+    for (const association of associations) {
+      const organisationUUID = association.organization?.uuid;
+      if (!organisationUUID) continue;
+
+      const organisation = await getOrganisation(organisationUUID);
+      organisationSet.add({
+        name: organisation.name.en_GB,
+        url: organisation.portalUrl,
+      });
+    }
+    const organisations: OrganisationalUnits = Array.from(organisationSet); // There are dublicates for some researchers
+
+    const keyWordGroups = researcher.keywordGroups;
+
+    const keywordsSet = new Set<string>();
+
+    if (keyWordGroups) {
+      for (const group of keyWordGroups) {
+        for (const keywordObj of group.keywords) {
+          for (const keyword of keywordObj.freeKeywords) {
+            keywordsSet.add(keyword);
+          }
+        }
+      }
+    }
+
+    const keywords: KeyWords = Array.from(keywordsSet);
+
+    let email = "";
+    for (const association of associations) {
+      const emails = association.emails;
+      if (!emails) continue;
+      if (emails.length > 0) {
+        email = emails[0].value;
+        break;
+      }
+    }
+
+    supervisors.push({
+      similarity: suggestion.similarity,
+      contacted: suggestion.contacted,
+      name: name,
+      email: email,
+      imageUrl: imageUrl,
+      organisationalUnits: organisations,
+      uuid: researcher.uuid,
+      topPaper: suggestion.top_paper,
+      keywords: keywords,
+    });
+  }
+
+  return supervisors;
 }
 
-export async function getSupervisors() {
-  const model = await getModel();
-  const { data: embeddings, error } = await supabase
-    .from("supervisor")
-    .select(`uuid, email, name, embedding_${model}_768`);
+async function getPerson(uuid: string) {
+  const API_KEY = process.env.PURE_API;
+  const BASE_URL = process.env.PURE_BASE_URL;
 
-  if (error) {
-    throw Error("No supervisors found");
+  if (!API_KEY || !BASE_URL) {
+    throw new Error(
+      "Environment variables PURE_API and PURE_BASE_URL must be set",
+    );
   }
 
-  return embeddings;
+  const response = await fetch(`${BASE_URL}/persons/${uuid}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "api-key": API_KEY,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const person = await response.json();
+  return person;
+}
+
+async function getOrganisation(uuid: string) {
+  const API_KEY = process.env.PURE_API;
+  const BASE_URL = process.env.PURE_BASE_URL;
+
+  if (!API_KEY || !BASE_URL) {
+    throw new Error(
+      "Environment variables PURE_API and PURE_BASE_URL must be set",
+    );
+  }
+
+  const response = await fetch(`${BASE_URL}/organizations/${uuid}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "api-key": API_KEY,
+    },
+  });
+
+  const organisation = await response.json();
+  return organisation;
 }
 
 export async function setModel(model: string) {
@@ -108,6 +198,7 @@ export async function setContacted(supervisorId: string) {
 export async function setStudentSupervisor(
   supervisorId: string,
   similarity: number,
+  topPaper: TopPaper,
 ) {
   const { userId } = await auth();
   if (!userId) {
@@ -119,18 +210,18 @@ export async function setStudentSupervisor(
       student_id: userId,
       supervisor_id: supervisorId,
       similarity: similarity,
+      top_paper: topPaper,
     })
     .select();
 
   if (error) {
-    throw Error("Failed to set similarity score");
+    throw Error("Failed to student-supervisor relationship");
   }
 
   return data;
 }
 
-export async function deleteStudentSupervisors() {
-  const { userId } = await auth();
+export async function deleteStudentSupervisors(userId: string) {
   if (!userId) {
     throw new Error("No user found");
   }
