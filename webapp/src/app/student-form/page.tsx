@@ -1,7 +1,9 @@
 import { content } from "../../lib/content";
+import { getTopics } from "./actions";
 import { StudentInput } from "./studentInput";
 
-export default function StudentFormPage() {
+export default async function StudentFormPage() {
+  const topics = await getTopics();
   return (
     <div className="space-y-6">
       <header className="mb-12 text-center">
@@ -10,7 +12,7 @@ export default function StudentFormPage() {
           Share your research interests and academic background with us.
         </p>
       </header>
-      <StudentInput />
+      <StudentInput topics={topics} />
     </div>
   );
 }

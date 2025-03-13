@@ -9,6 +9,7 @@ import {
   OrganisationalUnits,
   StaffOrganizationAssociation,
   Suggestions,
+  Topic,
   TopPaper,
 } from "./lib/types";
 
@@ -33,7 +34,7 @@ export async function getSuggestions(userId: string): Promise<Suggestions> {
       contacted, 
       supervisor_id,
       top_paper
-      `,
+      `
     )
     .eq("student_id", userId);
 
@@ -53,7 +54,7 @@ export async function getSuggestions(userId: string): Promise<Suggestions> {
       .filter((uuid: string | undefined): uuid is string => !!uuid);
 
     const organisationsPromises = orgUUIDs.map((uuid: string) =>
-      getOrganisation(uuid),
+      getOrganisation(uuid)
     );
     const organisationsData = await Promise.all(organisationsPromises);
 
@@ -123,7 +124,7 @@ async function getPerson(uuid: string) {
 
   if (!API_KEY || !BASE_URL) {
     throw new Error(
-      "Environment variables PURE_API and PURE_BASE_URL must be set",
+      "Environment variables PURE_API and PURE_BASE_URL must be set"
     );
   }
 
@@ -149,7 +150,7 @@ async function getOrganisation(uuid: string) {
 
   if (!API_KEY || !BASE_URL) {
     throw new Error(
-      "Environment variables PURE_API and PURE_BASE_URL must be set",
+      "Environment variables PURE_API and PURE_BASE_URL must be set"
     );
   }
 
@@ -192,24 +193,26 @@ export async function getModel(userId: string): Promise<string> {
 }
 
 export async function setContacted(userId: string, supervisorId: string) {
-  const { data, error } = await supabase.from("student_supervisor").upsert({
-    student_id: userId,
-    supervisor_id: supervisorId,
-    contacted: true,
-  });
+  const { data: contacted, error } = await supabase
+    .from("student_supervisor")
+    .upsert({
+      student_id: userId,
+      supervisor_id: supervisorId,
+      contacted: true,
+    });
 
   if (error) {
     throw Error("Failed to set contacted", error);
   }
 
-  return data;
+  return contacted;
 }
 
 export async function setStudentSupervisor(
   userId: string,
   supervisorId: string,
   similarity: number,
-  topPaper: TopPaper,
+  topPaper: TopPaper
 ) {
   const { data, error } = await supabase
     .from("student_supervisor")
@@ -248,4 +251,19 @@ export async function getUserId() {
     throw new Error("No user found");
   }
   return userId;
+}
+
+export async function getDbTopics() {
+  const { data: topics, error } = await supabase.from("topic").select("*");
+
+  if (error) {
+    throw Error("Failed to get topics");
+  }
+
+  const mappedTopics = topics.map((topic) => ({
+    ...topic,
+    topicId: topic.topic_id,
+  }));
+
+  return mappedTopics as Topic[];
 }

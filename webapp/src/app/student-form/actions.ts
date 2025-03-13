@@ -2,16 +2,23 @@
 
 import {
   deleteStudentSupervisors,
+  getDbTopics,
   getUserId,
   setStudent,
   setStudentSupervisor,
 } from "@/db";
-
-export async function storeSuggestions(text: string, projectType?: string) {
+import { Topic } from "@/lib/types";
+export async function storeTextSuggestions({
+  text,
+  projectType,
+}: {
+  text: string;
+  projectType?: string;
+}) {
   const userId = await getUserId();
 
   await deleteStudentSupervisors(userId);
-  
+
   const res = await fetch("http://127.0.0.1:5000/api", {
     cache: "no-store",
     method: "POST",
@@ -37,4 +44,19 @@ export async function storeSuggestions(text: string, projectType?: string) {
       suggestion.top_paper,
     );
   }
+}
+
+export async function storeTopicSuggestions({
+  topics,
+  projectType,
+}: {
+  topics: Topic[];
+  projectType?: string;
+}) {
+  console.log("topic stuff not done yet")
+}
+
+export async function getTopics() {
+  const topics = await getDbTopics();
+  return topics;
 }

@@ -51,7 +51,7 @@ def calculate_suggestions(embedding, supervisors):
         embedding = embedding.reshape(1, -1)
 
     for supervisor in supervisors:
-        embedding_str = supervisor.get('embedding', [])
+        embedding_str = supervisor.get('averaged_embedding', [])
 
         if not embedding_str:
             continue

@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { storeSuggestions } from "./actions";
+import { storeTextSuggestions, storeTopicSuggestions } from "./actions";
 import {
   Select,
   SelectContent,
@@ -25,15 +25,36 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { SelectTopics } from "./select-topics";
+import { Topics } from "@/lib/types";
 
-const formSchema = z.object({
-  text: z
-    .string()
-    .min(10, { message: "Your submission must be at least 10 characters" }),
-  projectType: z.enum(["specific", "general"]).optional(),
-});
+const formSchema = z.discriminatedUnion("projectType", [
+  z.object({
+    projectType: z.literal("specific"),
+    text: z.string().min(10, "Your submission must be at least 10 characters"),
+    topics: z.undefined().optional(),
+  }),
+  z.object({
+    projectType: z.literal("general"),
+    text: z.string().optional(),
+    topics: z
+      .array(
+        z.object({
+          topicId: z.number(),
+          label: z.string(),
+          keywords: z.array(z.string()),
+        })
+      )
+      .min(1, "Select at least one topic"),
+  }),
+  z.object({
+    projectType: z.undefined(),
+    text: z.string().optional(),
+    topics: z.array(z.any()).optional(),
+  }),
+]);
 
-export function StudentInput() {
+export function StudentInput({ topics }: { topics: Topics }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -50,8 +71,18 @@ export function StudentInput() {
     toast({
       title: `Form submitted, calculating suggestions`,
     });
-    
-    await storeSuggestions(data.text, data.projectType);
+
+    data.projectType === "specific" &&
+      (await storeTextSuggestions({
+        projectType: data.projectType,
+        text: data.text,
+      }));
+
+    data.projectType === "general" &&
+      (await storeTopicSuggestions({
+        projectType: data.projectType,
+        topics: data.topics ?? [],
+      }));
 
     router.push(`/suggestions`);
   }
@@ -88,6 +119,21 @@ export function StudentInput() {
                 </FormItem>
               )}
             />
+            {form.watch("projectType") === "general" && (
+              <FormField
+                control={form.control}
+                name="topics"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Topics</FormLabel>
+                    <FormControl>
+                      <SelectTopics topics={topics} value={field.value ?? []} onChange={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             {form.watch("projectType") === "specific" && (
               <FormField
                 control={form.control}
@@ -115,7 +161,7 @@ export function StudentInput() {
             className="w-full"
             disabled={!form.watch("projectType") || loading}
           >
-            { loading ? <LoaderCircle className="animate-spin"/> : "Submit" }
+            {loading ? <LoaderCircle className="animate-spin" /> : "Submit"}
           </Button>
         </form>
       </Form>

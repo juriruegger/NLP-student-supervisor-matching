@@ -69,3 +69,11 @@ export type Suggestion = {
 };
 
 export type Suggestions = Suggestion[];
+
+export type Topic = {
+  topicId: number;
+  keywords: string[];
+  label: string;
+};
+
+export type Topics = Topic[];
