@@ -1,8 +1,9 @@
-import { getModel } from "@/db";
+import { getModel, getUserId } from "@/db";
 import { Model } from "./model";
 
 export default async function Page() {
-  const bertModel = await getModel();
+  const userId = await getUserId();
+  const bertModel = await getModel(userId);
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Settings</h1>

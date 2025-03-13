@@ -2,16 +2,13 @@
 
 import {
   deleteStudentSupervisors,
+  getUserId,
   setStudent,
   setStudentSupervisor,
 } from "@/db";
-import { auth } from "@clerk/nextjs/server";
 
 export async function storeSuggestions(text: string) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw Error("No user found");
-  }
+  const userId = await getUserId();
 
   await deleteStudentSupervisors(userId);
 
@@ -30,10 +27,11 @@ export async function storeSuggestions(text: string) {
 
   const suggestions = await res.json();
   const topSuggestions = await suggestions.slice(0, 5);
-  await setStudent(text);
+  await setStudent(userId, text);
 
   for (const suggestion of topSuggestions) {
     await setStudentSupervisor(
+      userId,
       suggestion.supervisor,
       suggestion.similarity,
       suggestion.top_paper,

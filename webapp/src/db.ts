@@ -2,13 +2,17 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "./utils/utils";
-import { KeyWords, OrganisationalUnit, OrganisationalUnits, Suggestions, TopPaper } from "./lib/types";
+import {
+  KeyWords,
+  Organisation,
+  OrganisationalUnit,
+  OrganisationalUnits,
+  StaffOrganizationAssociation,
+  Suggestions,
+  TopPaper,
+} from "./lib/types";
 
-export async function setStudent(text: string) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw Error("No user found");
-  }
+export async function setStudent(userId: string, text: string) {
   const { data, error } = await supabase
     .from("student")
     .upsert({ user_id: userId, text: text })
@@ -21,8 +25,7 @@ export async function setStudent(text: string) {
   return data;
 }
 
-export async function getSuggestions(): Promise<Suggestions> {
-  const { userId } = await auth();
+export async function getSuggestions(userId: string): Promise<Suggestions> {
   const { data: suggestions, error } = await supabase
     .from("student_supervisor")
     .select(
@@ -38,40 +41,52 @@ export async function getSuggestions(): Promise<Suggestions> {
     throw Error("No suggestions found", error);
   }
 
-  const supervisors: Suggestions = [];
-  for (const suggestion of suggestions) {
+  const supervisorsPromises = suggestions.map(async (suggestion) => {
     const researcher = await getPerson(suggestion.supervisor_id);
     const name = researcher.name?.firstName + " " + researcher.name?.lastName;
+    const firstName = researcher.name?.firstName;
     const imageUrl = researcher.profilePhotos?.[0]?.url ?? "";
 
-    const organisationSet = new Set<OrganisationalUnit>();
     const associations = researcher.staffOrganizationAssociations || [];
-    for (const association of associations) {
-      const organisationUUID = association.organization?.uuid;
-      if (!organisationUUID) continue;
+    const orgUUIDs = associations
+      .map((assoc: StaffOrganizationAssociation) => assoc.organization?.uuid)
+      .filter((uuid: string | undefined): uuid is string => !!uuid);
 
-      const organisation = await getOrganisation(organisationUUID);
-      organisationSet.add({
-        name: organisation.name.en_GB,
-        url: organisation.portalUrl,
-      });
-    }
-    const organisations: OrganisationalUnits = Array.from(organisationSet); // There are dublicates for some researchers
+    const organisationsPromises = orgUUIDs.map((uuid: string) =>
+      getOrganisation(uuid),
+    );
+    const organisationsData = await Promise.all(organisationsPromises);
+
+    const organisationSet = new Set<OrganisationalUnit>();
+    organisationsData.forEach((org: Organisation) => {
+      if (org.name.en_GB) {
+        organisationSet.add({
+          name: org.name.en_GB,
+          url: org.portalUrl,
+        });
+      }
+    });
+    const organisations: OrganisationalUnits = Array.from(organisationSet);
 
     const keyWordGroups = researcher.keywordGroups;
-
     const keywordsSet = new Set<string>();
-
     if (keyWordGroups) {
       for (const group of keyWordGroups) {
         for (const keywordObj of group.keywords) {
           for (const keyword of keywordObj.freeKeywords) {
-            keywordsSet.add(keyword);
+            let newKeyword = "";
+            const words = keyword.split(" ");
+            for (const word of words) {
+              newKeyword += word.charAt(0).toUpperCase() + word.slice(1);
+              if (word !== words[words.length - 1]) {
+                newKeyword += " ";
+              }
+            }
+            keywordsSet.add(newKeyword);
           }
         }
       }
     }
-
     const keywords: KeyWords = Array.from(keywordsSet);
 
     let email = "";
@@ -84,19 +99,21 @@ export async function getSuggestions(): Promise<Suggestions> {
       }
     }
 
-    supervisors.push({
+    return {
       similarity: suggestion.similarity,
       contacted: suggestion.contacted,
       name: name,
+      firstName: firstName,
       email: email,
       imageUrl: imageUrl,
       organisationalUnits: organisations,
       uuid: researcher.uuid,
       topPaper: suggestion.top_paper,
       keywords: keywords,
-    });
-  }
+    };
+  });
 
+  const supervisors = await Promise.all(supervisorsPromises);
   return supervisors;
 }
 
@@ -148,11 +165,7 @@ async function getOrganisation(uuid: string) {
   return organisation;
 }
 
-export async function setModel(model: string) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw Error("No user found");
-  }
+export async function setModel(model: string, userId: string) {
   const { data, error } = await supabase
     .from("student")
     .upsert({ user_id: userId, model: model })
@@ -165,8 +178,7 @@ export async function setModel(model: string) {
   return data;
 }
 
-export async function getModel(): Promise<string> {
-  const { userId } = await auth();
+export async function getModel(userId: string): Promise<string> {
   const { data: model, error } = await supabase
     .from("student")
     .select("model")
@@ -179,9 +191,7 @@ export async function getModel(): Promise<string> {
   return model.model;
 }
 
-export async function setContacted(supervisorId: string) {
-  const { userId } = await auth();
-
+export async function setContacted(userId: string, supervisorId: string) {
   const { data, error } = await supabase.from("student_supervisor").upsert({
     student_id: userId,
     supervisor_id: supervisorId,
@@ -196,14 +206,11 @@ export async function setContacted(supervisorId: string) {
 }
 
 export async function setStudentSupervisor(
+  userId: string,
   supervisorId: string,
   similarity: number,
   topPaper: TopPaper,
 ) {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error("No user found");
-  }
   const { data, error } = await supabase
     .from("student_supervisor")
     .upsert({
@@ -222,10 +229,6 @@ export async function setStudentSupervisor(
 }
 
 export async function deleteStudentSupervisors(userId: string) {
-  if (!userId) {
-    throw new Error("No user found");
-  }
-
   const { data, error } = await supabase
     .from("student_supervisor")
     .delete()

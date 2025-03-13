@@ -17,7 +17,9 @@ if (!supabaseKey) {
   throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+export const supabaseNoCache = createClient(supabaseUrl, supabaseKey, {
   global: {
     fetch: (url, options = {}) => {
       return fetch(url, { ...options, cache: "no-store" });
