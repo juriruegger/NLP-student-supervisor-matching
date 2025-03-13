@@ -2,7 +2,6 @@
 
 import Matches from "./matches";
 import { getUserSuggestions } from "./actions";
-import { getUserId } from "@/db";
 
 export default async function Page() {
   const suggestions = await getUserSuggestions();
@@ -10,7 +9,5 @@ export default async function Page() {
     throw Error("No suggestions found");
   }
 
-  const userId = await getUserId();
-
-  return <Matches suggestions={suggestions} user={userId} />;
+  return <Matches suggestions={suggestions} />;
 }
