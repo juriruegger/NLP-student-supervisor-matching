@@ -9,6 +9,7 @@ import {
   OrganisationalUnits,
   StaffOrganizationAssociation,
   Suggestions,
+  Topic,
   TopPaper,
 } from "./lib/types";
 
@@ -192,25 +193,38 @@ export async function getModel(userId: string): Promise<string> {
 }
 
 export async function setContacted(userId: string, supervisorId: string) {
-  const { data, error } = await supabase.from("student_supervisor").upsert({
-    student_id: userId,
-    supervisor_id: supervisorId,
-    contacted: true,
-  });
+  const { data: contacted, error } = await supabase
+    .from("student_supervisor")
+    .upsert({
+      student_id: userId,
+      supervisor_id: supervisorId,
+      contacted: true,
+    });
 
   if (error) {
     throw Error("Failed to set contacted", error);
   }
 
-  return data;
+  return contacted;
 }
 
-export async function setStudentSupervisor(
-  userId: string,
-  supervisorId: string,
-  similarity: number,
-  topPaper: TopPaper,
-) {
+type setStudentSupervisorType = {
+  userId: string;
+  supervisorId: string;
+  similarity: number;
+  topPaper?: TopPaper;
+};
+export async function setStudentSupervisor({
+  userId,
+  supervisorId,
+  similarity,
+  topPaper
+}: setStudentSupervisorType) {
+  console.log("____________________");
+  console.log("userId", userId);
+  console.log("supervisorId", supervisorId);
+  console.log("similarity", similarity);
+  console.log("topPaper", topPaper);
   const { data, error } = await supabase
     .from("student_supervisor")
     .upsert({
@@ -248,4 +262,19 @@ export async function getUserId() {
     throw new Error("No user found");
   }
   return userId;
+}
+
+export async function getDbTopics() {
+  const { data: topics, error } = await supabase.from("topic").select("*");
+
+  if (error) {
+    throw Error("Failed to get topics");
+  }
+
+  const mappedTopics = topics.map((topic) => ({
+    ...topic,
+    topicId: topic.topic_id,
+  }));
+
+  return mappedTopics as Topic[];
 }

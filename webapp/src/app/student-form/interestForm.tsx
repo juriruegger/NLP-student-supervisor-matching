@@ -22,7 +22,7 @@ const formSchema = z.object({
 type InterestFormProps = {
   onSubmit: (data: z.infer<typeof formSchema>) => void;
   form: ReturnType<typeof useForm<z.infer<typeof formSchema>>>;
-}
+};
 
 export function InterestForm({ onSubmit, form }: InterestFormProps) {
   return (
