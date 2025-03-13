@@ -11,9 +11,6 @@ export default async function Page() {
   }
 
   const userId = await getUserId();
-  if (!userId) {
-    throw Error("No user found");
-  }
 
   return <Matches suggestions={suggestions} user={userId} />;
 }

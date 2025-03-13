@@ -8,7 +8,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,8 +19,7 @@ import { storeSuggestions } from "./actions";
 const formSchema = z.object({
   text: z
     .string()
-    .min(10, { message: "Your submission must be at least 10 characters" })
-    .max(1000, { message: "Your submission must be at most 1000 characters" }),
+    .min(10, { message: "Your submission must be at least 10 characters" }),
 });
 
 export function StudentInput() {
@@ -36,7 +34,7 @@ export function StudentInput() {
     storeSuggestions(data.text);
 
     toast({
-      title: `Form submitted`,
+      title: `Form submitted, calculating suggestions`,
     });
 
     router.push(`/suggestions`);
@@ -49,12 +47,11 @@ export function StudentInput() {
           control={form.control}
           name="text"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Interests</FormLabel>
+            <FormItem className="shadow-md focus-within:shadow-lg p-2 transition-shadow duration-300 rounded-2xl dark:border-0 border">
               <FormControl>
                 <Textarea
-                  placeholder="What are you interested in?"
-                  className="resize-none h-60 w-full px-3 py-2 border rounded-md "
+                  placeholder="What are you interested in? The more detail, the better!"
+                  className="resize-none h-80 w-full rounded-2xl bg-input"
                   {...field}
                 />
               </FormControl>
@@ -62,7 +59,9 @@ export function StudentInput() {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <div className="flex justify-center">
+          <Button type="submit">Submit</Button>
+        </div>
       </form>
     </Form>
   );

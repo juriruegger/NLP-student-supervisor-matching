@@ -17,8 +17,14 @@ export function NavUser({ username, userEmail }: NavUserProps) {
             <SignInButton />
           </SignedOut>
           <SignedIn>
-            <div className="flex px-1.5">
-              <UserButton />
+            <div className="flex mx-0.5">
+              <UserButton
+                appearance={{
+                  layout: {
+                    shimmer: false,
+                  },
+                }}
+              />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-semibold">{username}</span>

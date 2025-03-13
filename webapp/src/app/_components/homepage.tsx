@@ -7,13 +7,19 @@ import { content } from "../../lib/content";
 export function Homepage() {
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">{content.homepage.title}</h1>
+      <header className="mb-12 text-center">
+        <h1 className="text-4xl font-bold mb-4">{content.homepage.title}</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Find the perfect supervisor to guide you through your academic
+          project.
+        </p>
+      </header>
       <p>{content.homepage.text1}</p>
       <p>{content.homepage.text2}</p>
       <p>{content.homepage.text3}</p>
-      <div>
+      <div className="flex justify-center">
         <Link href="/student-form">
-          <Button>Student Form</Button>
+          <Button>Begin</Button>
         </Link>
       </div>
     </div>

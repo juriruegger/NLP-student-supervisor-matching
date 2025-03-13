@@ -7,13 +7,5 @@ type CheckmarkProps = {
 };
 
 export function Checkmark({ contacted }: CheckmarkProps) {
-  return (
-    <>
-      {contacted ? (
-        <Check size={24} className="text-green-500" />
-      ) : (
-        <Check size={24} className="text-transparent" /> // Hidden
-      )}
-    </>
-  );
+  return <>{contacted && <Check size={24} />}</>;
 }

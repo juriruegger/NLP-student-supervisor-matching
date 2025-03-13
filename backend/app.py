@@ -33,7 +33,6 @@ def api():
 
     embedding = get_embedding(str(text))
     suggestions = calculate_suggestions(embedding, supervisors)
-    print(suggestions)
 
     return jsonify(suggestions)
 
@@ -71,21 +70,33 @@ def calculate_suggestions(embedding, supervisors):
 
         similarity = cosine_similarity(embedding, supervisor_embedding).item()
 
-        top_paper = calculate_top_paper(embedding, supervisor)
-
         similarities.append({
-            'supervisor': supervisor.get('uuid'),
+            'supervisor': supervisor,
             'similarity': similarity,
-            'top_paper': top_paper
         })
 
     similarities.sort(key=lambda x: x['similarity'], reverse=True)
+    top_suggestions = similarities[:5]
+
+    final_suggestions = []
+    for suggestion in top_suggestions:
+        supervisor = suggestion['supervisor']
+        top_paper = calculate_top_paper(embedding, supervisor)
+        final_suggestions.append({
+            'supervisor': supervisor.get('uuid'),
+            'similarity': suggestion['similarity'],
+            'top_paper': top_paper
+        })
 
 
-    return similarities[:5]
+    return final_suggestions
 
 def calculate_top_paper(embedding, supervisor):
     abstracts = supervisor.get('abstracts', [])
+
+    if not abstracts:
+        return None
+
     similarities = []
 
     for abstract in abstracts:

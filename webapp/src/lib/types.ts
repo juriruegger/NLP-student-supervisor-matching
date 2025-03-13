@@ -6,9 +6,26 @@ export type Supervisor = {
   organisationalUnits?: string;
 };
 
+export type StaffOrganizationAssociation = {
+  organization?: {
+    uuid?: string;
+  };
+  emails?: Array<{
+    value: string;
+  }>;
+};
+
 export type OrganisationalUnit = {
   name: string;
   url: string;
+};
+
+export type Organisation = {
+  name: {
+    en_GB?: string;
+    da_DK?: string;
+  };
+  portalUrl: string;
 };
 
 export type OrganisationalUnits = OrganisationalUnit[];
@@ -23,7 +40,7 @@ export type Keyword = {
   pureId: number;
   locale: string;
   freeKeywords: string[];
-}
+};
 
 export type KeyWords = string[];
 
@@ -36,12 +53,13 @@ export type KeywordGroup = {
     da_DK: string;
   };
   keywords: Keyword[];
-}
+};
 
 export type Suggestion = {
   similarity: number;
   contacted: boolean;
   name: string;
+  firstName: string;
   email: string;
   imageUrl: string;
   organisationalUnits: OrganisationalUnits;

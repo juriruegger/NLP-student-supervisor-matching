@@ -1,5 +1,6 @@
-import { setModel } from "@/db";
+import { setModel, getUserId } from "@/db";
 
 export async function storeModel(model: string) {
-  await setModel(model);
+  const userId = await getUserId();
+  await setModel(model, userId);
 }

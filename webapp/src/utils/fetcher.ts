@@ -14,7 +14,7 @@ export async function fetchImage(imageUrl: string): Promise<string> {
 
     const imageBuffer = await response.arrayBuffer();
     const base64Image = Buffer.from(imageBuffer).toString("base64");
-    return `data:image/jpeg;base64,${base64Image}`; // Modify MIME type if not JPEG
+    return `data:image/jpeg;base64,${base64Image}`;
   } catch (error) {
     throw error;
   }

@@ -47,8 +47,7 @@ export async function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" variant="inset">
-      <SidebarHeader />
-      <SidebarContent className="mt-2">
+      <SidebarContent className="mt-1.5">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>

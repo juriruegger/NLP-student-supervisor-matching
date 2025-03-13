@@ -1,29 +1,40 @@
 "use server";
 
-import { getSuggestions, setContacted } from "@/db";
-import { Suggestions } from "@/lib/types";
+import { getSuggestions, getUserId, setContacted } from "@/db";
+import { Suggestion, Suggestions } from "@/lib/types";
 import { fetchImage } from "@/utils/fetcher";
 
 export async function getUserSuggestions(): Promise<Suggestions> {
-  const suggestions = await getSuggestions();
+  const userId = await getUserId();
+  const suggestions = await getSuggestions(userId);
 
-  const sortedSuggestions = suggestions.sort(
-    (a, b) => b.similarity - a.similarity,
+  const imageProcessingPromises = suggestions
+    .filter((suggestion) => suggestion.imageUrl)
+    .map(async (suggestion) => {
+      const processedImageUrl = await fetchImage(suggestion.imageUrl);
+      return { suggestion, processedImageUrl };
+    });
+
+  const processedImages = await Promise.all(imageProcessingPromises);
+
+  processedImages.forEach(
+    ({
+      suggestion,
+      processedImageUrl,
+    }: {
+      suggestion: Suggestion;
+      processedImageUrl: string;
+    }) => {
+      suggestion.imageUrl = processedImageUrl;
+    },
   );
 
-  const suggestionsWithImage = await Promise.all(
-    // we are fetching the supervisor images from Pure.
-    sortedSuggestions.map(async (suggestion) => {
-      if (suggestion.imageUrl) {
-        suggestion.imageUrl = await fetchImage(suggestion.imageUrl);
-      }
-      return suggestion;
-    }),
-  );
+  suggestions.sort((a, b) => b.similarity - a.similarity);
 
-  return suggestionsWithImage;
+  return suggestions;
 }
 
 export async function contactSupervisor(supervisor: string) {
-  await setContacted(supervisor);
+  const userId = await getUserId();
+  await setContacted(userId, supervisor);
 }
