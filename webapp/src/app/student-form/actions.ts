@@ -6,9 +6,8 @@ import {
   setStudent,
   setStudentSupervisor,
 } from "@/db";
-import { auth } from "@clerk/nextjs/server";
 
-export async function storeSuggestions(text: string) {
+export async function storeSuggestions(text: string, projectType?: string) {
   const userId = await getUserId();
 
   await deleteStudentSupervisors(userId);
@@ -19,11 +18,11 @@ export async function storeSuggestions(text: string) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, projectType }),
   });
 
   if (!res.ok) {
-    throw Error("Fething suggestions failed");
+    throw Error("Fetching suggestions failed");
   }
 
   const suggestions = await res.json();

@@ -38,7 +38,7 @@ export async function getSuggestions(userId: string): Promise<Suggestions> {
     .eq("student_id", userId);
 
   if (error) {
-    throw Error("No suggestions found", error);
+    throw Error("No suggestions found (db)", error);
   }
 
   const supervisorsPromises = suggestions.map(async (suggestion) => {

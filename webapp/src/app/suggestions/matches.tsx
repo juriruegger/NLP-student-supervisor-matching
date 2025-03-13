@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Loading from "./loading";
 import { supabase } from "@/utils/utils";
 import { SuggestionCard } from "./components/suggestion-card";
-import { AnimatePresence, motion, stagger } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 
 type MatchesProps = {
   suggestions: Suggestion[];
@@ -49,7 +49,7 @@ export default function Matches({ suggestions, user }: MatchesProps) {
       <header className="mb-12 text-center">
         <h1 className="text-4xl font-bold mb-4">{content.suggestions.title}</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Based on your research interests, we've identified potential
+          Based on your research interests, we&apos;ve identified potential
           supervisors who align with your academic goals.
         </p>
       </header>
