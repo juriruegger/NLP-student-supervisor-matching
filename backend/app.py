@@ -21,20 +21,60 @@ key = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 
 supabase: Client = create_client(url, key)
 
+BATCH_SIZE = 100
+offset = 0
+supervisors = []
+
+while True: # Fetching supervisors in batches
+    response = (
+        supabase.table("supervisor")
+        .select("*")
+        .range(offset, offset + BATCH_SIZE - 1)
+        .execute()
+    )
+    batch = response.data or []
+    if not batch:
+        break
+
+    supervisors.extend(batch)
+    offset += BATCH_SIZE
+
 @app.route('/api', methods=['POST'])
-def api():
+def api(): 
     data = request.get_json()
-    text = data.get('text')
-    response = supabase.table("supervisor").select("*").execute()
-    supervisors = response.data
+    project_type = data.get('projectType')
+    if project_type == "specific":
+        text = data.get('text')
+        if not text or not supervisors:
+            return jsonify({'error': 'Invalid input data'}), 400
 
-    if not text or not supervisors:
-        return jsonify({'error': 'Invalid input data'}), 400
+        embedding = get_embedding(str(text))
+        suggestions = calculate_suggestions(embedding, supervisors)
+        return jsonify(suggestions)
+    
+    elif project_type == "general":
+        topics = data.get('topics')
+        if not topics:
+            return jsonify({'error': 'Invalid input data'}), 400
+        
+        response = supabase.table("supervisor_topic").select("*").execute()
+        supervisors_db = response.data
 
-    embedding = get_embedding(str(text))
-    suggestions = calculate_suggestions(embedding, supervisors)
+        suggestions = calculate_topic_suggestions(topics, supervisors_db)
+        sorted_suggestions = sorted(suggestions.items(), key=lambda x: x[1], reverse=True)
+        top_suggestions = sorted_suggestions[:5]
+        final_suggestions = []
+        for supervisor_id, score in top_suggestions:
+            final_suggestions.append({
+                'supervisor': supervisor_id,
+                'similarity': score
+            })
+        return jsonify(final_suggestions)
+    
+    else:
+        return jsonify({'error': 'Invalid project type'}), 400
 
-    return jsonify(suggestions)
+        
 
 def get_embedding(sentence):
     inputs = tokenizer(sentence, max_length=8192, truncation=True, return_tensors="pt")
@@ -51,7 +91,7 @@ def calculate_suggestions(embedding, supervisors):
         embedding = embedding.reshape(1, -1)
 
     for supervisor in supervisors:
-        embedding_str = supervisor.get('embedding', [])
+        embedding_str = supervisor.get('averaged_embedding', [])
 
         if not embedding_str:
             continue
@@ -125,6 +165,25 @@ def calculate_top_paper(embedding, supervisor):
     top_paper = similarities[0]
 
     return top_paper
+
+def calculate_topic_suggestions(topics, supervisors_db):
+    suggested_supervisors = {}
+
+    for supervisor_topic in supervisors_db:
+        print(f"Supervisor: {supervisor_topic}")
+        supervisor_id = supervisor_topic.get('uuid')
+        if not supervisor_id:
+            continue
+
+        for topic in topics:
+            topic_id = topic.get('topicId')
+
+            if supervisor_topic.get('topic_id') == topic_id:
+                supervisor_score = supervisor_topic.get('score', 0)
+                suggested_supervisors[supervisor_id] = suggested_supervisors.get(supervisor_id, 0) + supervisor_score
+
+    return suggested_supervisors
+
 
 if __name__ == '__main__':
     app.run(debug=True)
