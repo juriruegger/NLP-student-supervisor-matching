@@ -7,26 +7,26 @@ import {
   setStudentSupervisor,
 } from "@/db";
 
-export async function storeSuggestions(text: string) {
+export async function storeSuggestions(text: string, projectType?: string) {
   const userId = await getUserId();
 
   await deleteStudentSupervisors(userId);
-
+  
   const res = await fetch("http://127.0.0.1:5000/api", {
     cache: "no-store",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, projectType }),
   });
 
   if (!res.ok) {
-    throw Error("Fething suggestions failed");
+    throw Error("Fetching suggestions failed");
   }
 
   const suggestions = await res.json();
-  const topSuggestions = await suggestions.slice(0, 5);
+  const topSuggestions = suggestions.slice(0, 5);
   await setStudent(userId, text);
 
   for (const suggestion of topSuggestions) {

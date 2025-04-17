@@ -2,48 +2,14 @@
 
 import { content } from "../../lib/content";
 import { Suggestion } from "@/lib/types";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Loading from "./loading";
-import { supabase } from "@/utils/utils";
 import { SuggestionCard } from "./components/suggestion-card";
 import { AnimatePresence, motion } from "motion/react";
 
 type MatchesProps = {
   suggestions: Suggestion[];
-  user: string;
 };
 
-export default function Matches({ suggestions, user }: MatchesProps) {
-  const router = useRouter();
-
-  useEffect(() => {
-    // We are looking for changes to the student_supervisor table and refreshing the page, once the new data arrives.
-    const channel = supabase
-      .channel("custom-filter-channel")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "student_supervisor",
-          filter: `student_id=eq.${user}`,
-        },
-        () => {
-          router.refresh();
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, router]);
-
-  if (suggestions.length === 0) {
-    return <Loading />;
-  }
-
+export default function Matches({ suggestions }: MatchesProps) {
   return (
     <div className="space-y-8">
       <header className="mb-12 text-center">
