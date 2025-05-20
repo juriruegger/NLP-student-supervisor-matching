@@ -1,7 +1,7 @@
 ## Running the app
 Please remember to install the correct dependencies based on the `requirements.txt` in the backend and `pnpm install` for the frontend (navigate to the correct subfolder first).
 
-You must add a `.env.local` file to the top of the webapp folder and the top of the backend folder with the following variables, as this is not being updated automatically with pnpm. The openai api key is unnecessary to run the application and is only used for testing purposes.
+You must add a `.env.local` file to the top of the webapp folder and the top of the backend folder with the following variables. The openai api key is unnecessary to run the application and is only used for testing purposes.
 
 #### Webapp
 `NEXT_PUBLIC_SUPABASE_URL=https://nojcvxzcmqwmjfasalxh.supabase.co`

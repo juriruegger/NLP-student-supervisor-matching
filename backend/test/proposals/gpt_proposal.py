@@ -8,7 +8,7 @@ load_dotenv("backend/.env.local")
 
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI()
-proposals = pd.read_csv("backend/test/proposals.csv")
+proposals = pd.read_csv("backend/test/proposals/proposals.csv")
 gpt_proposals = pd.DataFrame(columns=["firstName", "lastName", "proposal"])
 
 for index, row in proposals.iterrows():
