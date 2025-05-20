@@ -6,7 +6,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -14,7 +13,6 @@ import {
 } from "@/components/ui/sidebar";
 import { NavUser } from "./nav-user";
 import { currentUser } from "@clerk/nextjs/server";
-
 // Menu items.
 const items = [
   {

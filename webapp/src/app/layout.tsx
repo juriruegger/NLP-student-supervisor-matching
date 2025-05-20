@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "SupervisorMatch",
   description: "An application to match students with supervisors",
   icons: {
-    icon: "https://i.ibb.co/0VK4D1Np/Supervisor-Match-Favicon.webp",
+    icon: "https://i.ibb.co/zV62nj6Q/May-18-2025-Optimizing-Modern-BERT-API.png",
   },
 };
 

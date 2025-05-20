@@ -16,6 +16,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,17 +24,38 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { SelectTopics } from "./select-topics";
+import { Topics } from "@/lib/types";
 
-const formSchema = z.object({
-  text: z
-    .string()
-    .min(10, { message: "Your submission must be at least 10 characters" }),
-  projectType: z.enum(["specific", "general"]).optional(),
-});
+const formSchema = z.discriminatedUnion("projectType", [
+  z.object({
+    projectType: z.literal("specific"),
+    text: z.string().min(10, "Your submission must be at least 10 characters"),
+    topics: z.undefined().optional(),
+  }),
+  z.object({
+    projectType: z.literal("general"),
+    text: z.string().optional(),
+    topics: z
+      .array(
+        z.object({
+          topicId: z.number(),
+          label: z.string(),
+          keywords: z.array(z.string()),
+        }),
+      )
+      .min(1, "Select at least one topic"),
+  }),
+  z.object({
+    projectType: z.undefined(),
+    text: z.string().optional(),
+    topics: z.array(z.any()).optional(),
+  }),
+]);
 
-export function StudentInput() {
+export function StudentInput({ topics }: { topics: Topics }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -45,14 +67,46 @@ export function StudentInput() {
     },
   });
 
+  useEffect(() => {
+    const raw = localStorage.getItem("student-input");
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      const res = formSchema.safeParse(parsed);
+      if (res.success) {
+        form.reset(res.data);
+      }
+    } catch {}
+  }, [form]);
+
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      localStorage.setItem("student-input", JSON.stringify(value));
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setLoading(true);
     toast({
       title: `Form submitted, calculating suggestions`,
     });
-    
-    await storeSuggestions(data.text, data.projectType);
 
+    if (data.projectType === "specific") {
+      await storeSuggestions({
+        projectType: data.projectType,
+        text: data.text,
+      });
+    }
+
+    if (data.projectType === "general") {
+      await storeSuggestions({
+        projectType: data.projectType,
+        topics: data.topics ?? [],
+      });
+    }
+
+    localStorage.removeItem("student-input");
     router.push(`/suggestions`);
   }
 
@@ -69,7 +123,7 @@ export function StudentInput() {
                   <FormLabel>Project Type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value ?? undefined}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -88,6 +142,25 @@ export function StudentInput() {
                 </FormItem>
               )}
             />
+            {form.watch("projectType") === "general" && (
+              <FormField
+                control={form.control}
+                name="topics"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Topics</FormLabel>
+                    <FormControl>
+                      <SelectTopics
+                        topics={topics}
+                        value={field.value ?? []}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             {form.watch("projectType") === "specific" && (
               <FormField
                 control={form.control}
@@ -95,10 +168,15 @@ export function StudentInput() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Project details</FormLabel>
+                    <FormDescription>
+                      Describe the kind of project you&apos;d be most excited to
+                      work on. You can mention topics, research questions,
+                      methods, or tools you&apos;d like to work with.
+                    </FormDescription>
                     <div className="shadow-md focus-within:shadow-lg transition-shadow duration-300 rounded-2xl border border-border">
                       <FormControl>
                         <Textarea
-                          placeholder="What are your current thoughts for the project? The more detail, the better!"
+                          placeholder="I’d love to explore data privacy using NLP tools, especially in the context of healthcare records…"
                           className="resize-none h-80 w-full rounded-2xl bg-input"
                           {...field}
                         />
@@ -115,7 +193,7 @@ export function StudentInput() {
             className="w-full"
             disabled={!form.watch("projectType") || loading}
           >
-            { loading ? <LoaderCircle className="animate-spin"/> : "Submit" }
+            {loading ? <LoaderCircle className="animate-spin" /> : "Submit"}
           </Button>
         </form>
       </Form>

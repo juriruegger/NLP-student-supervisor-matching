@@ -1,16 +1,18 @@
-import { getModel, getUserId } from "@/db";
-import { Model } from "./model";
+import { getAvailability } from "./actions";
+import { Settings } from "./settings";
 
-export default async function Page() {
-  const userId = await getUserId();
-  const bertModel = await getModel(userId);
+export default async function StudentFormPage() {
+  let availability = await getAvailability();
+  if (!availability) {
+    availability = false;
+  }
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Settings</h1>
-      <div className="space-y-2">
-        <p>Model</p>
-        <Model model={bertModel} />
-      </div>
+    <div className="space-y-6 w-full">
+      <header className="mb-12">
+        <h1 className="text-4xl font-bold mb-4">Settings</h1>
+      </header>
+
+      <Settings availability={availability} />
     </div>
   );
 }

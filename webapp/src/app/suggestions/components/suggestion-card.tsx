@@ -98,33 +98,40 @@ export function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="overflow-hidden mt-4 space-y-6"
               >
-                <Separator />
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Research Alignment</h3>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                      Your research interests seem to align well with this paper
-                      from {suggestion.firstName}
-                    </p>
-                    <div className="max-w-full overflow-hidden">
-                      <Button variant="link" asChild className="p-0">
-                        <Link
-                          href={suggestion.topPaper?.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <File className="h-4 w-4" />
-                          {window.innerWidth >= 640
-                            ? suggestion.topPaper?.title
-                            : suggestion.topPaper?.title.length > 50
-                              ? suggestion.topPaper?.title.slice(0, 50) + "..."
-                              : suggestion.topPaper?.title}
-                        </Link>
-                      </Button>
+                {suggestion.topPaper && suggestion.topPaper.url && (
+                  <>
+                    <Separator />
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">
+                        Research Alignment
+                      </h3>
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">
+                          Your research interests seem to align well with this
+                          paper from {suggestion.firstName}
+                        </p>
+                        <div className="max-w-full overflow-hidden">
+                          <Button variant="link" asChild className="p-0">
+                            <Link
+                              href={suggestion.topPaper?.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <File className="h-4 w-4" />
+                              {window.innerWidth >= 640
+                                ? suggestion.topPaper?.title
+                                : suggestion.topPaper?.title.length > 50
+                                  ? suggestion.topPaper?.title.slice(0, 50) +
+                                    "..."
+                                  : suggestion.topPaper?.title}
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <Separator />
+                    <Separator />
+                  </>
+                )}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Affiliations</h3>
                   <ul className="space-y-2">
