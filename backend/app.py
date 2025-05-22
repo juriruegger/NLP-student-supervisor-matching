@@ -21,7 +21,7 @@ key = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 
 supabase: Client = create_client(url, key)
 
-BATCH_SIZE = 100
+BATCH_SIZE = 50
 offset = 0
 supervisors = []
 
@@ -38,6 +38,9 @@ while True: # Fetching supervisors in batches
 
     supervisors.extend(batch)
     offset += BATCH_SIZE
+
+response = supabase.table("supervisor_topic").select("*").execute()
+supervisors_topic_db = response.data
 
 @app.route('/api', methods=['POST'])
 def api(): 
@@ -56,11 +59,8 @@ def api():
         topics = data.get('topics')
         if not topics:
             return jsonify({'error': 'Invalid input data'}), 400
-        
-        response = supabase.table("supervisor_topic").select("*").execute()
-        supervisors_db = response.data
 
-        suggestions = calculate_topic_suggestions(topics, supervisors_db)
+        suggestions = calculate_topic_suggestions(topics, supervisors_topic_db)
         sorted_suggestions = sorted(suggestions.items(), key=lambda x: x[1], reverse=True)
         top_suggestions = sorted_suggestions[:5]
         final_suggestions = []
@@ -73,8 +73,6 @@ def api():
     
     else:
         return jsonify({'error': 'Invalid project type'}), 400
-
-        
 
 def get_embedding(sentence):
     inputs = tokenizer(sentence, max_length=8192, truncation=True, return_tensors="pt")
@@ -166,11 +164,10 @@ def calculate_top_paper(embedding, supervisor):
 
     return top_paper
 
-def calculate_topic_suggestions(topics, supervisors_db):
+def calculate_topic_suggestions(topics, supervisors_topic_db):
     suggested_supervisors = {}
 
-    for supervisor_topic in supervisors_db:
-        print(f"Supervisor: {supervisor_topic}")
+    for supervisor_topic in supervisors_topic_db:
         supervisor_id = supervisor_topic.get('uuid')
         if not supervisor_id:
             continue

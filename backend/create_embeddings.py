@@ -30,7 +30,6 @@ tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModel.from_pretrained(model_id)
 
 # Utils
-
 def extract_keywords(obj):
     keywords = set()
     for keyWordGroup in obj.get("keywordGroups", []):
@@ -308,12 +307,12 @@ for researcher in researchers:
     for tid in top_tids:
         # get top n keywords for the topic
         n_keywords = 10
-        keywords = [w.title() for w, _ in topic_model.get_topic(tid)[:n_keywords]]
-        label = keywords[0].title()
+        keywords = [w for w, _ in topic_model.get_topic(tid)[:n_keywords]]
+        label = keywords[0]
 
         for i in range(n_keywords):
-            if keywords[i].title() not in existing_labels:
-                label = keywords[i].title()
+            if keywords[i] not in existing_labels:
+                label = keywords[i]
                 break
 
         existing_labels.add(label)
@@ -355,8 +354,10 @@ def deduplicate_topics(topics):
 
 supervisor_updates = []
 
+uuids = []
 for researcher in researchers:
     uuid = researcher.get("uuid")
+    uuids.append(uuid)
     embedding = researcher.get("embedding") # embedding
     averaged_embedding = researcher.get("averaged_embedding") # averaged embedding
     embedding_with_keywords = researcher.get("embedding_with_keywords")  # added embedding with keywords
@@ -417,22 +418,21 @@ for i in range(0, len(supervisor_updates), batch_size):
     except Exception as e:
         print(f"Error in batch {batch_num}: {str(e)}")
 
+# Delete all old topics and supervisor_topic relations
+supabase.table("supervisor_topic").delete().neq("uuid", "1").execute()
+supabase.table("topic").delete().neq("label", "1").execute()
+
+# Insert new topics
 if topics:
     unique_topics = deduplicate_topics(topics)
-    supabase.table("topic").upsert(unique_topics).execute()
+    supabase.table("topic").insert(unique_topics).execute()
 
-for topic in supervisor_topics:
-    if not valid_supervisor_topic(topic["topic_id"]):
-        print("Invalid topic_id:", topic)
-    if not valid_supervisor_topic(topic["score"]):
-        print("Invalid score:", topic)
-
-valid_stopic = [
-    topic for topic in supervisor_topics
-    if valid_supervisor_topic(topic["topic_id"]) and valid_supervisor_topic(topic["score"])
+valid_stopics = [
+    supervisor_topic for supervisor_topic in supervisor_topics
+    if valid_supervisor_topic(supervisor_topic["topic_id"]) and valid_supervisor_topic(supervisor_topic["score"])
 ]
 
-if valid_stopic:
-    supabase.table("supervisor_topic").upsert(valid_stopic).execute()
+if valid_stopics:
+    supabase.table("supervisor_topic").insert(valid_stopics).execute()
 
-print("Upsert completed")
+print("Update completed")

@@ -16,7 +16,7 @@ export default function Matches({ suggestions }: MatchesProps) {
         <h1 className="text-4xl font-bold mb-4">{content.suggestions.title}</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Based on your research interests, we have identified potential
-          supervisors who align with your academic goals.
+          supervisors who align with your academic goals
         </p>
       </header>
       <AnimatePresence mode="wait">

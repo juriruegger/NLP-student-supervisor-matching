@@ -135,16 +135,23 @@ export function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Affiliations</h3>
                   <ul className="space-y-2">
-                    {suggestion.organisationalUnits.map((unit, index) => (
-                      <li key={index} className="flex items-center space-x-2">
+                    {Array.from(
+                      new Map(
+                        suggestion.organisationalUnits.map((organisation) => [
+                          organisation.name,
+                          organisation,
+                        ]),
+                      ).values(),
+                    ).map((organisation, idx) => (
+                      <li key={idx} className="flex items-center space-x-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                         <Link
-                          href={unit.url}
+                          href={organisation.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm hover:underline"
                         >
-                          {unit.name}
+                          {organisation.name}
                         </Link>
                       </li>
                     ))}
