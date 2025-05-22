@@ -10,8 +10,7 @@ export function Homepage() {
       <header className="mb-12 text-center">
         <h1 className="text-4xl font-bold mb-4">{content.homepage.title}</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Find the perfect supervisor to guide you through your academic
-          project.
+          Find the perfect supervisor to guide you through your academic project
         </p>
       </header>
       <p>{content.homepage.text1}</p>

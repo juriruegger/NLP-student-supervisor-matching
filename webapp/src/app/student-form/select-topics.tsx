@@ -41,7 +41,7 @@ export function SelectTopics({ topics, value, onChange }: SelectTopicsProps) {
       <div className="flex flex-wrap gap-2">
         {selected.map((topic) => (
           <Badge variant="default" key={topic.topicId} className="gap-1">
-            {topic.label}
+            {prettify(topic.label)}
             <X className="size-3" onClick={() => handleRemove(topic)} />
           </Badge>
         ))}
@@ -60,10 +60,12 @@ export function SelectTopics({ topics, value, onChange }: SelectTopicsProps) {
                       value={[...topic.keywords].join(" ")}
                       onSelect={() => handleSelect(topic)}
                     >
-                      {topic.label}
+                      {prettify(topic.label)}
                     </CommandItem>
                   </TooltipTrigger>
-                  <TooltipContent>{topic.keywords.join(", ")}</TooltipContent>
+                  <TooltipContent>
+                    {topic.keywords.map(prettify).join(", ")}
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             ))}
@@ -73,3 +75,40 @@ export function SelectTopics({ topics, value, onChange }: SelectTopicsProps) {
     </>
   );
 }
+
+// We capitalize the first letter of each word and lowercase the rest unless it's an acronym where we capitalize the whole word.
+export function prettify(text: string): string {
+  return text
+    .split(" ")
+    .map((word) => {
+      if (Object.keys(acronyms).includes(word.toLowerCase())) {
+        return acronyms[word.toLowerCase()];
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
+export const acronyms: Record<string, string> = {
+  nlp: "NLP",
+  css: "CSS",
+  hci: "HCI",
+  tinyml: "TinyML",
+  ml: "ML",
+  iot: "IoT",
+  mpc: "MPC",
+  llm: "LLM",
+  ai: "AI",
+  eeg: "EEG",
+  esg: "ESG",
+  "ui/ux": "UI/UX",
+  cscw: "CSCW",
+  sts: "STS",
+  mrs: "MRS",
+  ux: "UX",
+  eaa: "EAA",
+  wad: "WAD",
+  api: "API",
+  gpu: "GPU",
+  genai: "GenAI",
+};
