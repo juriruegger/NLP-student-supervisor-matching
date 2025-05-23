@@ -1,6 +1,7 @@
-import numpy as np
 from transformers import BertTokenizer, BertModel
 import torch
+from transformers import AutoTokenizer
+from adapters import AutoAdapterModel
 
 bert_model_id = "bert-base-uncased"
 bert_tokenizer = BertTokenizer.from_pretrained(bert_model_id)
@@ -9,13 +10,23 @@ bert_model = BertModel.from_pretrained(bert_model_id)
 def get_bert_embeddings(supervisors):
 
     def embed(text):
-        inputs = bert_tokenizer(text, max_length=512, padding="max_length", truncation=True, return_tensors="pt")
+        inputs = bert_tokenizer(
+            text, 
+            max_length=512, 
+            padding="max_length", 
+            truncation=True, 
+            return_tensors="pt"
+        )
         with torch.no_grad():
             outputs = bert_model(**inputs)
 
         # Mean pooling for the entire text
-        embedding = torch.mean(outputs.last_hidden_state * inputs["attention_mask"].unsqueeze(-1), dim=1)
-        return embedding.squeeze().detach()
+        mask = inputs["attention_mask"].unsqueeze(-1)
+        token_embeddings = outputs.last_hidden_state
+        summed = (token_embeddings * mask).sum(dim=1)
+        counts = mask.sum(dim=1)
+        mean_pooled = summed / counts 
+        return mean_pooled.squeeze().detach() 
     
     def average_pooling(embeddings):
         return torch.mean(torch.stack(embeddings), dim=0)
@@ -43,13 +54,23 @@ scibert_model = BertModel.from_pretrained(scibert_model_id)
 def get_scibert_embeddings(supervisors):
 
     def embed(text):
-        inputs = scibert_tokenizer(text, max_length=512, padding="max_length", truncation=True, return_tensors="pt")
+        inputs = scibert_tokenizer(
+            text, 
+            max_length=512, 
+            padding=True, 
+            truncation=True, 
+            return_tensors="pt"
+        )
         with torch.no_grad():
             outputs = scibert_model(**inputs)
 
         # Mean pooling for the entire text
-        embedding = torch.mean(outputs.last_hidden_state * inputs["attention_mask"].unsqueeze(-1), dim=1)
-        return embedding.squeeze().detach()
+        mask = inputs["attention_mask"].unsqueeze(-1)
+        token_embeddings = outputs.last_hidden_state
+        summed = (token_embeddings * mask).sum(dim=1)
+        counts = mask.sum(dim=1)
+        mean_pooled = summed / counts 
+        return mean_pooled.squeeze().detach() 
     
     def average_pooling(embeddings):
         return torch.mean(torch.stack(embeddings), dim=0)
@@ -71,19 +92,32 @@ def get_scibert_embeddings(supervisors):
 
     return supervisors
 
-specter2_model_id = "allenai/specter2_base"
-specter2_tokenizer = BertTokenizer.from_pretrained(specter2_model_id)
-specter2_model = BertModel.from_pretrained(specter2_model_id)
+
+specter_tokenizer = AutoTokenizer.from_pretrained('allenai/specter2_base')
+specter_model = AutoAdapterModel.from_pretrained('allenai/specter2_base')
+
+specter_model.load_adapter("allenai/specter2", source="hf", load_as="specter2", set_active=True)
 
 def get_specter2_embeddings(supervisors):
-
     def embed(text):
-        inputs = specter2_tokenizer(text, max_length=512, padding="max_length", truncation=True, return_tensors="pt")
-        with torch.no_grad():
-            outputs = specter2_model(**inputs)
+        inputs = specter_tokenizer(
+            text,
+            padding=True,
+            truncation=True,
+            max_length=512,
+            return_tensors="pt"
+        )
 
-        return outputs.last_hidden_state[:, 0].squeeze().detach()
-    
+        with torch.no_grad():
+            outputs = specter_model(**inputs)
+
+        mask = inputs["attention_mask"].unsqueeze(-1)
+        token_embeddings = outputs.last_hidden_state
+        summed = (token_embeddings * mask).sum(dim=1)
+        counts = mask.sum(dim=1)
+        mean_pooled = summed / counts 
+        return mean_pooled.squeeze().detach() 
+
     def average_pooling(embeddings):
         return torch.mean(torch.stack(embeddings), dim=0)
 

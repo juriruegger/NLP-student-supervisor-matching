@@ -1,3 +1,4 @@
+import json
 import numpy as np
 from transformers import BertTokenizer, BertModel
 import torch
@@ -15,8 +16,13 @@ def bert_averaged_embeddings(supervisors, supervisors_db):
             outputs = model(**inputs)
 
         # Mean pooling for the entire text
-        embedding = torch.mean(outputs.last_hidden_state * inputs["attention_mask"].unsqueeze(-1), dim=1)
-        return embedding.squeeze().detach()
+        mask = inputs["attention_mask"].unsqueeze(-1)
+        token_embeddings = outputs.last_hidden_state
+        summed = (token_embeddings * mask).sum(dim=1)
+        counts = mask.sum(dim=1)
+        mean_pooled = summed / counts
+        
+        return mean_pooled.squeeze().detach() 
 
     def calculate_suggestions(embedding, supervisors):
         similarities = []
@@ -31,7 +37,7 @@ def bert_averaged_embeddings(supervisors, supervisors_db):
             if not embedding_str:
                 continue
 
-            embedding_list = embedding_str
+            embedding_list = json.loads(embedding_str)
 
             try:
                 supervisor_embedding = np.array([float(x) for x in embedding_list]).reshape(1, -1)

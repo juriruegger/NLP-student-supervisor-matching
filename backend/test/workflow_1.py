@@ -9,15 +9,14 @@ import sys
 import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from backend.create_embeddings.get_other_model_embeddings import get_bert_embeddings
-from backend.create_embeddings.get_other_model_embeddings import get_scibert_embeddings
-from backend.test.embedding_approaches.averaged_embeddings import averaged_embeddings
-from backend.test.embedding_approaches.averaged_embeddings_with_keywords import averaged_embeddings_with_keywords
-from backend.test.embedding_approaches.concat_embeddings import concat_embeddings
-from backend.test.embedding_approaches.concat_embeddings_with_keywords import concat_embeddings_with_keywords
-from backend.test.embedding_approaches.tfidf_baseline import tfidf_baseline
+from backend.test.embedding_approaches.approach_tests.averaged_embeddings import averaged_embeddings
+from backend.test.embedding_approaches.approach_tests.averaged_embeddings_with_keywords import averaged_embeddings_with_keywords
+from backend.test.embedding_approaches.approach_tests.concat_embeddings import concat_embeddings
+from backend.test.embedding_approaches.approach_tests.concat_embeddings_with_keywords import concat_embeddings_with_keywords
+from backend.test.embedding_approaches.approach_tests.tfidf_baseline import tfidf_baseline
 from backend.test.embedding_approaches.model_tests.bert_averaged import bert_averaged_embeddings
 from backend.test.embedding_approaches.model_tests.scibert_averaged import scibert_averaged_embeddings
+from backend.test.embedding_approaches.model_tests.specter import specter_averaged_embeddings
 
 
 load_dotenv("backend/.env.local")
@@ -71,10 +70,12 @@ def evaluate_proposals(proposals, supervisors_db, label):
         averaged_embeddings,
         bert_averaged_embeddings,
         scibert_averaged_embeddings,
+        specter_averaged_embeddings,
         tfidf_baseline
     ]
     mrr_approach_results = {}
 
+    print("Running approach tests...")
     for test in tests:
         print("Running test:", test.__name__)
         mrr = test(supervisors, supervisors_db)
@@ -93,6 +94,7 @@ def evaluate_proposals(proposals, supervisors_db, label):
 
     mrr_model_results = {}
 
+    print("\nRunning model tests...")
     for test in model_tests:
         print("Running test:", test.__name__)
         mrr = test(supervisors, supervisors_db)
@@ -119,7 +121,17 @@ supervisors_db = []
 while True:
     response = (
         supabase.table("supervisor")
-        .select("name", "embedding", "averaged_embedding", "embedding_with_keywords", "averaged_embedding_with_keywords", "bert_averaged_embedding", "scibert_averaged_embedding")
+        .select(
+            "name", 
+            "abstracts",
+            "embedding", 
+            "averaged_embedding", 
+            "embedding_with_keywords", 
+            "averaged_embedding_with_keywords", 
+            "bert_averaged_embedding", 
+            "scibert_averaged_embedding",
+            "specter2_averaged_embedding",
+        )
         .range(offset, offset + BATCH_SIZE - 1)
         .execute()
     )
@@ -132,7 +144,9 @@ while True:
 
 print(f"Fetched total rows: {len(supervisors_db)}")
 
-print("Evaluating supervisor proposals...")
+print("__" * 50)
+print("\nEvaluating supervisor proposals...")
 evaluate_proposals(proposals, supervisors_db, "supervisor_proposals")
-print("Evaluating GPT proposals...")
+print("__" * 50)
+print("\nEvaluating GPT proposals...")
 evaluate_proposals(gpt_proposals, supervisors_db, "gpt_proposals")
