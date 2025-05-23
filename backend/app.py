@@ -28,7 +28,8 @@ supervisors = []
 while True: # Fetching supervisors in batches
     response = (
         supabase.table("supervisor")
-        .select("*")
+        .select("uuid", "averaged_embedding", "abstracts")
+        .eq("available", True)
         .range(offset, offset + BATCH_SIZE - 1)
         .execute()
     )

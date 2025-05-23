@@ -11,6 +11,8 @@ from collections import defaultdict
 import joblib
 from hdbscan import HDBSCAN
 
+from backend.create_embeddings.get_other_model_embeddings import get_bert_embeddings, get_scibert_embeddings, get_specter2_embeddings
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # PURE setup
@@ -403,7 +405,16 @@ for researcher in researchers:
         "email": email,
     })
 
-batch_size = 10 # We're upserting in batches to avoid size limitations
+# Processing BERT embeddings
+supervisor_updates = get_bert_embeddings(supervisor_updates)
+
+# Processing SciBERT embeddings
+supervisor_updates = get_scibert_embeddings(supervisor_updates)
+
+# Processing Specter2 embeddings
+supervisor_updates = get_specter2_embeddings(supervisor_updates)
+
+batch_size = 5 # We're upserting in batches to avoid size limitations
 
 for i in range(0, len(supervisor_updates), batch_size):
     batch = supervisor_updates[i:i+batch_size]

@@ -1,0 +1,79 @@
+import json
+import numpy as np
+from transformers import BertTokenizer, BertModel
+import torch
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Models and tokenizers
+model_id = 'allenai/scibert_scivocab_uncased'
+tokenizer = BertTokenizer.from_pretrained(model_id)
+model = BertModel.from_pretrained(model_id)
+
+def scibert_averaged_embeddings(supervisors, supervisors_db):
+    def embed(text):
+        inputs = tokenizer(text, max_length=512, padding="max_length", truncation=True, return_tensors="pt")
+        with torch.no_grad():
+            outputs = model(**inputs)
+
+        # Mean pooling for the entire text
+        embedding = torch.mean(outputs.last_hidden_state * inputs["attention_mask"].unsqueeze(-1), dim=1)
+        return embedding.squeeze().detach()
+    
+    def average_pooling(embeddings):
+        return torch.mean(torch.stack(embeddings), dim=0)
+
+    def calculate_suggestions(embedding, supervisors):
+        similarities = []
+
+        # Ensure embedding is 2D
+        if len(embedding.shape) == 1:
+            embedding = embedding.reshape(1, -1)
+
+        for supervisor in supervisors:
+            embedding_str = supervisor.get('scibert_averaged_embedding', [])
+
+            if not embedding_str:
+                continue
+
+            embedding_list = embedding_str
+
+            try:
+                supervisor_embedding = np.array([float(x) for x in embedding_list]).reshape(1, -1)
+            except ValueError:
+                print('Error parsing supervisor embedding')
+                continue
+
+            similarity = cosine_similarity(embedding, supervisor_embedding)
+            supervisor["similarity"] = similarity.item()
+            similarities.append({
+                'supervisor': supervisor,
+                'similarity': similarity.item()
+            })
+        similarities.sort(key=lambda x: x['similarity'], reverse=True)
+
+        return similarities
+    
+    for supervisor_db in supervisors_db:
+        embeddings = []
+        if not supervisor_db.get('abstracts'):
+            continue
+        for abstract in supervisor_db['abstracts']:
+            embedding = embed(str(abstract))
+            embeddings.append(embedding)
+        supervisor_db['scibert_averaged_embedding'] = average_pooling(embeddings).tolist()
+
+    reciprocal_ranks = []
+    for supervisor in supervisors:
+        for proposal in supervisor['proposals']:
+            embedding = embed(str(proposal))
+            similarities = calculate_suggestions(embedding, supervisors_db)
+            
+            for rank, similarity in enumerate(similarities, 1):
+                if (similarity['supervisor']['name']['firstName'] == supervisor['firstName'] and
+                    similarity['supervisor']['name']['lastName'] == supervisor['lastName']):
+                    reciprocal_ranks.append(1.0 / rank)
+                    break
+
+    mrr = sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0
+        
+    return mrr
