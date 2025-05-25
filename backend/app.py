@@ -28,7 +28,8 @@ supervisors = []
 while True: # Fetching supervisors in batches
     response = (
         supabase.table("supervisor")
-        .select("*")
+        .select("uuid", "averaged_embedding", "abstracts")
+        .eq("available", True)
         .range(offset, offset + BATCH_SIZE - 1)
         .execute()
     )
@@ -78,8 +79,13 @@ def get_embedding(sentence):
     inputs = tokenizer(sentence, max_length=8192, truncation=True, return_tensors="pt")
     with torch.no_grad():
         outputs = model(**inputs)
-    embedding = torch.mean(outputs.last_hidden_state * inputs["attention_mask"].unsqueeze(-1), dim=1).squeeze()
-    return embedding
+    mask = inputs["attention_mask"].unsqueeze(-1)
+    token_embeddings = outputs.last_hidden_state
+    summed = (token_embeddings * mask).sum(dim=1)
+    counts = mask.sum(dim=1)
+    mean_pooled = summed / counts 
+
+    return mean_pooled.squeeze().detach() 
 
 def calculate_suggestions(embedding, supervisors):
     similarities = []
