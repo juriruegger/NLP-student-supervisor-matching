@@ -93,17 +93,36 @@ export function StudentInput({ topics }: { topics: Topics }) {
     });
 
     if (data.projectType === "specific") {
-      await storeSuggestions({
+      const res = await storeSuggestions({
         projectType: data.projectType,
         text: data.text,
       });
+
+      if (!res.ok) {
+        setLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Failed to submit your project details",
+          description: "Please try refreshing the page.",
+        });
+        return;
+      }
     }
 
     if (data.projectType === "general") {
-      await storeSuggestions({
+      const res = await storeSuggestions({
         projectType: data.projectType,
         topics: data.topics ?? [],
       });
+      if (!res.ok) {
+        setLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Failed to submit your research interests",
+          description: "Please try refreshing the page.",
+        });
+        return;
+      }
     }
 
     localStorage.removeItem("student-input");

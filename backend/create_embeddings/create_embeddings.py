@@ -1,4 +1,5 @@
 import math
+import sys
 from sklearn.feature_extraction.text import CountVectorizer
 from transformers import AutoTokenizer, AutoModel
 import torch
@@ -10,6 +11,8 @@ from bertopic import BERTopic
 from collections import defaultdict
 import joblib
 from hdbscan import HDBSCAN
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from backend.create_embeddings.get_other_model_embeddings import get_bert_embeddings, get_scibert_embeddings, get_specter2_embeddings
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -192,8 +195,13 @@ def embed(text):
         outputs = model(**inputs)
 
     # Mean pooling for the entire text
-    embedding = torch.mean(outputs.last_hidden_state * inputs["attention_mask"].unsqueeze(-1), dim=1)
-    return embedding.squeeze().detach()
+    mask = inputs["attention_mask"].unsqueeze(-1)
+    token_embeddings = outputs.last_hidden_state
+    summed = (token_embeddings * mask).sum(dim=1)
+    counts = mask.sum(dim=1)
+    mean_pooled = summed / counts
+
+    return mean_pooled.squeeze().detach() 
 
 # Apply average mean pooling across embeddings for a single researcher (testing)
 def average_pooling(embeddings):
@@ -403,7 +411,16 @@ for researcher in researchers:
         "email": email,
     })
 
-batch_size = 10 # We're upserting in batches to avoid size limitations
+# Adding BERT embeddings
+supervisor_updates = get_bert_embeddings(supervisor_updates)
+
+# Adding SciBERT embeddings
+supervisor_updates = get_scibert_embeddings(supervisor_updates)
+
+# Adding Specter2 embeddings
+supervisor_updates = get_specter2_embeddings(supervisor_updates)
+
+batch_size = 5 # We're upserting in batches to avoid size limitations
 
 for i in range(0, len(supervisor_updates), batch_size):
     batch = supervisor_updates[i:i+batch_size]

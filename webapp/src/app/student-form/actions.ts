@@ -21,10 +21,15 @@ export async function storeSuggestions({
   projectType,
 }: textSuggestionType) {
   const userId = await getUserId();
-
+  
   await deleteStudentSupervisors(userId);
 
-  const res = await fetch("http://127.0.0.1:5000/api", {
+  const URL = process.env.BACKEND_URL;
+  if (!URL) {
+    throw new Error("BACKEND_URL is not defined");
+  }
+
+  const res = await fetch(URL, {
     cache: "no-store",
     method: "POST",
     headers: {
@@ -52,6 +57,7 @@ export async function storeSuggestions({
       topPaper: suggestion.top_paper,
     });
   }
+  return res;
 }
 
 export async function getTopics() {

@@ -26,7 +26,7 @@ supervisors_db = []
 while True:
     response = (
         supabase.table("supervisor")
-        .select("*")
+        .select("uuid", "name")
         .range(offset, offset + BATCH_SIZE - 1)
         .execute()
     )
