@@ -16,6 +16,8 @@ You must add a `.env.local` file to the top of the webapp folder and the top of 
 
 `PURE_BASE_URL="https://pure.itu.dk/ws/api"`
 
+`BACKEND_URL=http://127.0.0.1:5000/api`
+
 #### backend
 `PURE_API_KEY="7624b829-efa4-4b7f-8e3d-4fcb295bd819"`
 
