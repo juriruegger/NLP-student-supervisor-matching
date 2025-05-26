@@ -9,9 +9,10 @@ model_id = "answerdotai/ModernBERT-base"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModel.from_pretrained(model_id)
 
-def concat_embeddings_with_keywords(supervisors, supervisors_db):
+def modernbert_averaged_embeddings(supervisors, supervisors_db):
     def embed(text):
         inputs = tokenizer(text, max_length=8192, truncation=True, return_tensors="pt")
+        input_length = len(inputs["input_ids"][0])
         with torch.no_grad():
             outputs = model(**inputs)
 
@@ -22,7 +23,7 @@ def concat_embeddings_with_keywords(supervisors, supervisors_db):
         counts = mask.sum(dim=1)
         mean_pooled = summed / counts
         
-        return mean_pooled.squeeze().detach() 
+        return mean_pooled.squeeze().detach(), input_length
 
     def calculate_suggestions(embedding, supervisors):
         similarities = []
@@ -32,7 +33,7 @@ def concat_embeddings_with_keywords(supervisors, supervisors_db):
             embedding = embedding.reshape(1, -1)
 
         for supervisor in supervisors:
-            embedding_str = supervisor.get('embedding_with_keywords', [])
+            embedding_str = supervisor.get('averaged_embedding', []) # Getting the averaged embedding instead'
 
             if not embedding_str:
                 continue
@@ -55,20 +56,26 @@ def concat_embeddings_with_keywords(supervisors, supervisors_db):
 
         return similarities
 
+    length_results = []
     reciprocal_ranks = []
     for supervisor in supervisors:
         for proposal in supervisor['proposals']:
-            embedding = embed(proposal)
+            embedding, input_length = embed(proposal)
             similarities = calculate_suggestions(embedding, supervisors_db)
             
             for rank, similarity in enumerate(similarities, 1):
                 if (similarity['supervisor']['name']['firstName'] == supervisor['firstName'] and
                     similarity['supervisor']['name']['lastName'] == supervisor['lastName']):
                     reciprocal_ranks.append(1.0 / rank)
+                    length_results.append((
+                        rank,
+                        input_length,
+                    ))
+                    #print(f"Supervisor: {supervisor['firstName']} {supervisor['lastName']}, rank: {rank}, length: {input_length}, ")
                     break
 
     mrr = sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0
-        
+    
     return mrr
 
 

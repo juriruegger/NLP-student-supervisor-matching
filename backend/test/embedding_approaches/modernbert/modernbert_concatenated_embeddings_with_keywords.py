@@ -9,7 +9,7 @@ model_id = "answerdotai/ModernBERT-base"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModel.from_pretrained(model_id)
 
-def concat_embeddings(supervisors, supervisors_db):
+def modernbert_concatenated_embeddings_with_keywords(supervisors, supervisors_db):
     def embed(text):
         inputs = tokenizer(text, max_length=8192, truncation=True, return_tensors="pt")
         with torch.no_grad():
@@ -32,7 +32,7 @@ def concat_embeddings(supervisors, supervisors_db):
             embedding = embedding.reshape(1, -1)
 
         for supervisor in supervisors:
-            embedding_str = supervisor.get('embedding', [])
+            embedding_str = supervisor.get('embedding_with_keywords', [])
 
             if not embedding_str:
                 continue

@@ -22,8 +22,9 @@ for index, row in proposals.iterrows():
         instructions = (
             "You are given a project proposal written by a university supervisor. "
             "Your task is to rewrite this proposal as if a master's student had written it, using entirely your own words and phrasing. "
+            "The text by this master student is to be used as a project proposal for a master's thesis. "
             "Paraphrase all sentences as much as possible. Use more informal, student-like language and avoid academic jargon or supervisor-specific terminology. "
-            "Change the structure where possible, for example by re-ordering sentences, merging or splitting ideas, and adding a student perspective such as mentioning challenges, uncertainties, or why the topic interests you. "
+            "Change the structure where possible, for example by re-ordering sentences, merging or splitting ideas, and adding a student perspective such as mentioning why the topic interests you. "
             "Avoid copying any long phrases or uncommon words from the original text. The rewritten proposal should be of similar length but should clearly sound like it was written by a student, not a faculty member. "
             "Do not include any titles. It should be written as a student input, aiming to give a description of a project they want to work on."
             "Output only the rewritten text, no explanation."
@@ -40,4 +41,4 @@ for index, row in proposals.iterrows():
     }])], ignore_index=True)
 
 
-gpt_proposals.to_csv("backend/test/gpt_proposals.csv", index=False)
+gpt_proposals.to_csv("backend/test/proposals/gpt_proposals.csv", index=False)

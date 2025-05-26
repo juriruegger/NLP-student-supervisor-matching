@@ -1,34 +1,27 @@
 import json
 import numpy as np
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
+from transformers import AutoTokenizer, AutoModel
 import torch
-from transformers import AutoTokenizer
-from adapters import AutoAdapterModel
+from sklearn.metrics.pairwise import cosine_similarity
 
-specter_tokenizer = AutoTokenizer.from_pretrained('allenai/specter2_base')
-specter_model = AutoAdapterModel.from_pretrained('allenai/specter2_base')
+# Models and tokenizers
+model_id = "answerdotai/ModernBERT-base"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model = AutoModel.from_pretrained(model_id)
 
-specter_model.load_adapter("allenai/specter2", source="hf", load_as="specter2", set_active=True)
-
-def specter_averaged_embeddings(supervisors, supervisors_db):
+def modernbert_averaged_embeddings_with_keywords(supervisors, supervisors_db):
     def embed(text):
-        inputs = specter_tokenizer(
-            text,
-            padding=True,
-            truncation=True,
-            max_length=512,
-            return_tensors="pt"
-        )
-
+        inputs = tokenizer(text, max_length=8192, truncation=True, return_tensors="pt")
         with torch.no_grad():
-            outputs = specter_model(**inputs)
+            outputs = model(**inputs)
 
+        # Mean pooling for the entire text
         mask = inputs["attention_mask"].unsqueeze(-1)
         token_embeddings = outputs.last_hidden_state
         summed = (token_embeddings * mask).sum(dim=1)
         counts = mask.sum(dim=1)
-        mean_pooled = summed / counts 
+        mean_pooled = summed / counts
+        
         return mean_pooled.squeeze().detach() 
 
     def calculate_suggestions(embedding, supervisors):
@@ -39,7 +32,7 @@ def specter_averaged_embeddings(supervisors, supervisors_db):
             embedding = embedding.reshape(1, -1)
 
         for supervisor in supervisors:
-            embedding_str = supervisor.get('specter2_averaged_embedding', [])
+            embedding_str = supervisor.get('averaged_embedding_with_keywords', []) # Getting the averaged embedding instead'
 
             if not embedding_str:
                 continue
@@ -65,7 +58,7 @@ def specter_averaged_embeddings(supervisors, supervisors_db):
     reciprocal_ranks = []
     for supervisor in supervisors:
         for proposal in supervisor['proposals']:
-            embedding = embed(str(proposal))
+            embedding = embed(proposal)
             similarities = calculate_suggestions(embedding, supervisors_db)
             
             for rank, similarity in enumerate(similarities, 1):

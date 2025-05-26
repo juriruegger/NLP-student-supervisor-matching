@@ -57,7 +57,6 @@ export async function storeSuggestions({
       topPaper: suggestion.top_paper,
     });
   }
-  return res;
 }
 
 export async function getTopics() {

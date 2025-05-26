@@ -3,6 +3,9 @@ import torch
 from transformers import AutoTokenizer
 from adapters import AutoAdapterModel
 
+def average_pooling(embeddings):
+        return torch.mean(torch.stack(embeddings), dim=0)
+
 bert_model_id = "bert-base-uncased"
 bert_tokenizer = BertTokenizer.from_pretrained(bert_model_id)
 bert_model = BertModel.from_pretrained(bert_model_id)
@@ -27,9 +30,6 @@ def get_bert_embeddings(supervisors):
         counts = mask.sum(dim=1)
         mean_pooled = summed / counts 
         return mean_pooled.squeeze().detach() 
-    
-    def average_pooling(embeddings):
-        return torch.mean(torch.stack(embeddings), dim=0)
 
     for supervisor in supervisors:
         embeddings = []
@@ -45,6 +45,10 @@ def get_bert_embeddings(supervisors):
 
         supervisor['bert_averaged_embedding'] = average_pooling(embeddings).tolist() if embeddings else []
 
+        keywords = " ".join(supervisor.get("keywords") or [])
+        embeddings_keywords = embed(keywords)
+        supervisor['bert_averaged_embedding_with_keywords'] = average_pooling(embeddings + [embeddings_keywords]).tolist() if embeddings else []
+
     return supervisors
 
 scibert_model_id = "allenai/scibert_scivocab_uncased"
@@ -57,7 +61,7 @@ def get_scibert_embeddings(supervisors):
         inputs = scibert_tokenizer(
             text, 
             max_length=512, 
-            padding=True, 
+            padding='max_length', 
             truncation=True, 
             return_tensors="pt"
         )
@@ -71,9 +75,6 @@ def get_scibert_embeddings(supervisors):
         counts = mask.sum(dim=1)
         mean_pooled = summed / counts 
         return mean_pooled.squeeze().detach() 
-    
-    def average_pooling(embeddings):
-        return torch.mean(torch.stack(embeddings), dim=0)
 
     for supervisor in supervisors:
         embeddings = []
@@ -90,21 +91,24 @@ def get_scibert_embeddings(supervisors):
 
         supervisor['scibert_averaged_embedding'] = average_pooling(embeddings).tolist() if embeddings else []
 
+        keywords = " ".join(supervisor.get("keywords") or [])
+        embeddings_keywords = embed(keywords)
+        supervisor['scibert_averaged_embedding_with_keywords'] = average_pooling(embeddings + [embeddings_keywords]).tolist() if embeddings else []
+
     return supervisors
 
 
 specter_tokenizer = AutoTokenizer.from_pretrained('allenai/specter2_base')
 specter_model = AutoAdapterModel.from_pretrained('allenai/specter2_base')
-
 specter_model.load_adapter("allenai/specter2", source="hf", load_as="specter2", set_active=True)
 
 def get_specter2_embeddings(supervisors):
     def embed(text):
         inputs = specter_tokenizer(
             text,
-            padding=True,
             truncation=True,
             max_length=512,
+            padding='max_length',
             return_tensors="pt"
         )
 
@@ -117,9 +121,6 @@ def get_specter2_embeddings(supervisors):
         counts = mask.sum(dim=1)
         mean_pooled = summed / counts 
         return mean_pooled.squeeze().detach() 
-
-    def average_pooling(embeddings):
-        return torch.mean(torch.stack(embeddings), dim=0)
 
     for supervisor in supervisors:
         embeddings = []
@@ -135,5 +136,9 @@ def get_specter2_embeddings(supervisors):
             embeddings.append(embedding)
 
         supervisor['specter2_averaged_embedding'] = average_pooling(embeddings).tolist() if embeddings else []
+
+        keywords = " ".join(supervisor.get("keywords") or [])
+        embeddings_keywords = embed(keywords)
+        supervisor['specter2_averaged_embedding_with_keywords'] = average_pooling(embeddings + [embeddings_keywords]).tolist() if embeddings else []
 
     return supervisors

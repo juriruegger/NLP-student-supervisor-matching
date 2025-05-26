@@ -69,7 +69,7 @@ response = requests.get(person_url, headers=person_headers, params=person_params
 response.raise_for_status()
 persons = response.json()
 researchers = persons.get("items", [])
-all_researchers = researchers.copy() # all researcher will be used for topic modelling, so this should be unchanged
+all_researchers = researchers.copy() # all researcher will be used for the topic modelling vocabulary, so this should be unchanged
 
 # Filter researchers who are allowed as supervisors.
 allowed_titles = [
@@ -247,7 +247,7 @@ for researcher in researchers:
     researcher["embedding_with_keywords"] = master_embedding_with_keywords
     researcher["averaged_embedding_with_keywords"] = averaged_embedding_with_keywords
 
-# Topic modelling
+# Topic modelling ---------------------------------------------------
 # Getting possible keywords from all researchers and research outputs
 all_keywords = set()
 for researcher in all_researchers:
@@ -309,7 +309,7 @@ existing_labels = set()
 
 for researcher in researchers:
     tid_scores = sup_topic_scores.get(researcher["uuid"], {})
-    top_tids = sorted(tid_scores, key=tid_scores.get, reverse=True)[:5]
+    top_tids = sorted(tid_scores, key=tid_scores.get, reverse=True)
     topic_ids = []
     
     for tid in top_tids:
@@ -326,7 +326,7 @@ for researcher in researchers:
         existing_labels.add(label)
 
         topics[tid] = {               
-            "topic_id": tid,
+            "topic_id": int(tid),
             "label": label,
             "keywords": keywords,
         }
@@ -348,17 +348,27 @@ for row in supervisor_topics:
 supervisor_topics = list(unique_pairs.values())
 
 # Some topics can be duplicated, so we ensure they are unique
-def deduplicate_topics(topics):
-    seen = set()
+def deduplicate_topics(topics, supervisor_topics):
+    key_to_correct_id = {}
+    id_remap = {}
     unique = []
     for topic in topics.values():
-        label = topic["label"]
-        keywords_tuple = tuple(topic["keywords"])
-        key = (label, keywords_tuple)
-        if key not in seen:
-            seen.add(key)
+        key = (topic["label"], tuple(topic["keywords"]))
+        current_id = topic["topic_id"]
+        if key not in key_to_correct_id:
+            key_to_correct_id[key] = current_id
             unique.append(topic)
-    return unique
+            continue
+
+        correct_id = key_to_correct_id[key]
+        id_remap[current_id] = correct_id
+
+    for supervisor_topic in supervisor_topics:
+        old_id = supervisor_topic["topic_id"]
+        if old_id in id_remap:
+            supervisor_topic["topic_id"] = id_remap[old_id]    
+
+    return unique, supervisor_topics
 
 supervisor_updates = []
 
@@ -402,6 +412,7 @@ for researcher in researchers:
     
     supervisor_updates.append({
         "uuid": uuid,
+        "keywords": list(extract_keywords(researcher)),
         "embedding": embedding, # concattenated embedding
         "averaged_embedding": averaged_embedding, # averaged embedding
         "embedding_with_keywords": embedding_with_keywords, # concattenated embedding with keywords
@@ -412,12 +423,15 @@ for researcher in researchers:
     })
 
 # Adding BERT embeddings
+print("Adding BERT embeddings...")
 supervisor_updates = get_bert_embeddings(supervisor_updates)
 
 # Adding SciBERT embeddings
+print("Adding SciBERT embeddings...")
 supervisor_updates = get_scibert_embeddings(supervisor_updates)
 
 # Adding Specter2 embeddings
+print("Adding Specter2 embeddings...")
 supervisor_updates = get_specter2_embeddings(supervisor_updates)
 
 batch_size = 5 # We're upserting in batches to avoid size limitations
@@ -441,15 +455,15 @@ supabase.table("topic").delete().neq("label", "1").execute()
 
 # Insert new topics
 if topics:
-    unique_topics = deduplicate_topics(topics)
+    unique_topics, supervisor_topics = deduplicate_topics(topics, supervisor_topics)
     supabase.table("topic").insert(unique_topics).execute()
 
-valid_stopics = [
+valid_supervisor_topics = [
     supervisor_topic for supervisor_topic in supervisor_topics
     if valid_supervisor_topic(supervisor_topic["topic_id"]) and valid_supervisor_topic(supervisor_topic["score"])
 ]
 
-if valid_stopics:
-    supabase.table("supervisor_topic").insert(valid_stopics).execute()
+if valid_supervisor_topics:
+    supabase.table("supervisor_topic").insert(valid_supervisor_topics).execute()
 
 print("Update completed")

@@ -1,17 +1,17 @@
 import json
 import numpy as np
-from transformers import AutoTokenizer, AutoModel
+from transformers import BertTokenizer, BertModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Models and tokenizers
-model_id = "answerdotai/ModernBERT-base"
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoModel.from_pretrained(model_id)
+model_id = 'allenai/scibert_scivocab_uncased'
+tokenizer = BertTokenizer.from_pretrained(model_id)
+model = BertModel.from_pretrained(model_id)
 
-def averaged_embeddings_with_keywords(supervisors, supervisors_db):
+def scibert_averaged_embeddings_with_keywords(supervisors, supervisors_db):
     def embed(text):
-        inputs = tokenizer(text, max_length=8192, truncation=True, return_tensors="pt")
+        inputs = tokenizer(text, max_length=512, padding="max_length", truncation=True, return_tensors="pt")
         with torch.no_grad():
             outputs = model(**inputs)
 
@@ -32,7 +32,7 @@ def averaged_embeddings_with_keywords(supervisors, supervisors_db):
             embedding = embedding.reshape(1, -1)
 
         for supervisor in supervisors:
-            embedding_str = supervisor.get('averaged_embedding_with_keywords', []) # Getting the averaged embedding instead'
+            embedding_str = supervisor.get('scibert_averaged_embedding_with_keywords', [])
 
             if not embedding_str:
                 continue
@@ -58,7 +58,7 @@ def averaged_embeddings_with_keywords(supervisors, supervisors_db):
     reciprocal_ranks = []
     for supervisor in supervisors:
         for proposal in supervisor['proposals']:
-            embedding = embed(proposal)
+            embedding = embed(str(proposal))
             similarities = calculate_suggestions(embedding, supervisors_db)
             
             for rank, similarity in enumerate(similarities, 1):

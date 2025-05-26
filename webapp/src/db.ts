@@ -263,8 +263,8 @@ export async function getDBAvailability() {
     .single();
 
   if (error) {
-    throw new Error("Failed to get availability");
-  }
+    console.error("Failed to get availability", error);
+  } 
 
   return data?.available;
 }

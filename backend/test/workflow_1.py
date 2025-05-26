@@ -8,15 +8,19 @@ import seaborn as sns
 import sys
 import os
 
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from backend.test.embedding_approaches.approach_tests.averaged_embeddings import averaged_embeddings
-from backend.test.embedding_approaches.approach_tests.averaged_embeddings_with_keywords import averaged_embeddings_with_keywords
-from backend.test.embedding_approaches.approach_tests.concat_embeddings import concat_embeddings
-from backend.test.embedding_approaches.approach_tests.concat_embeddings_with_keywords import concat_embeddings_with_keywords
-from backend.test.embedding_approaches.approach_tests.tfidf_baseline import tfidf_baseline
-from backend.test.embedding_approaches.model_tests.bert_averaged import bert_averaged_embeddings
-from backend.test.embedding_approaches.model_tests.scibert_averaged import scibert_averaged_embeddings
-from backend.test.embedding_approaches.model_tests.specter import specter_averaged_embeddings
+from backend.test.embedding_approaches.modernbert.modernbert_averaged_embeddings import modernbert_averaged_embeddings
+from backend.test.embedding_approaches.modernbert.modernbert_averaged_embeddings_with_keywords import modernbert_averaged_embeddings_with_keywords
+from backend.test.embedding_approaches.modernbert.modernbert_concatenated_embeddings import modernbert_concatenated_embeddings
+from backend.test.embedding_approaches.modernbert.modernbert_concatenated_embeddings_with_keywords import modernbert_concatenated_embeddings_with_keywords
+from backend.test.embedding_approaches.tfidf_baseline import tfidf_baseline
+from backend.test.embedding_approaches.bert.bert_averaged import bert_averaged_embeddings
+from backend.test.embedding_approaches.bert.bert_averaged_with_keywords import bert_averaged_embeddings_with_keywords
+from backend.test.embedding_approaches.scibert.scibert_averaged import scibert_averaged_embeddings
+from backend.test.embedding_approaches.scibert.scibert_averaged_with_keywords import scibert_averaged_embeddings_with_keywords
+from backend.test.embedding_approaches.specter.specter2_averaged import specter2_averaged_embeddings
+from backend.test.embedding_approaches.specter.specter2_averaged_with_keywords import specter2_averaged_embeddings_with_keywords
 
 
 load_dotenv("backend/.env.local")
@@ -59,18 +63,24 @@ def evaluate_proposals(proposals, supervisors_db, label):
         })
 
     tests = [
-        concat_embeddings, 
-        averaged_embeddings, 
-        concat_embeddings_with_keywords, 
-        averaged_embeddings_with_keywords, 
+        modernbert_concatenated_embeddings, 
+        modernbert_averaged_embeddings, 
+        modernbert_concatenated_embeddings_with_keywords, 
+        modernbert_averaged_embeddings_with_keywords, 
         tfidf_baseline
     ]
 
     model_tests = [
-        averaged_embeddings,
+        modernbert_concatenated_embeddings,
+        modernbert_concatenated_embeddings_with_keywords,
+        modernbert_averaged_embeddings,
+        modernbert_averaged_embeddings_with_keywords,
         bert_averaged_embeddings,
+        bert_averaged_embeddings_with_keywords,
         scibert_averaged_embeddings,
-        specter_averaged_embeddings,
+        scibert_averaged_embeddings_with_keywords,
+        specter2_averaged_embeddings,
+        specter2_averaged_embeddings_with_keywords,
         tfidf_baseline
     ]
     mrr_approach_results = {}
@@ -80,12 +90,11 @@ def evaluate_proposals(proposals, supervisors_db, label):
         print("Running test:", test.__name__)
         mrr = test(supervisors, supervisors_db)
         print("MRR:", mrr)
-        mrr_approach_results[test.__name__.replace('_', ' ').capitalize()] = mrr
+        mrr_approach_results[test.__name__.replace('_', ' ').title()] = mrr
 
     sns.set_theme(style="whitegrid")
     plt.figure(figsize=(10, 6))
     sns.barplot(x=list(mrr_approach_results.keys()), y=list(mrr_approach_results.values()))
-    plt.xlabel("Embedding Method")
     plt.ylabel("Mean Reciprocal Rank (MRR)")
     plt.ylim(0, 1)
     plt.xticks(rotation=45)
@@ -99,12 +108,11 @@ def evaluate_proposals(proposals, supervisors_db, label):
         print("Running test:", test.__name__)
         mrr = test(supervisors, supervisors_db)
         print("MRR:", mrr)
-        mrr_model_results[test.__name__.replace('_', ' ').capitalize()] = mrr
+        mrr_model_results[test.__name__.replace('_', ' ').title()] = mrr
 
     sns.set_theme(style="whitegrid")
     plt.figure(figsize=(10, 6))
     sns.barplot(x=list(mrr_model_results.keys()), y=list(mrr_model_results.values()))
-    plt.xlabel("Embedding Method")
     plt.ylabel("Mean Reciprocal Rank (MRR)")
     plt.ylim(0, 1)
     plt.xticks(rotation=45)
@@ -114,7 +122,7 @@ def evaluate_proposals(proposals, supervisors_db, label):
 proposals = pd.read_csv("backend/test/proposals/proposals.csv")
 gpt_proposals = pd.read_csv("backend/test/proposals/gpt_proposals.csv")
 
-BATCH_SIZE = 50
+BATCH_SIZE = 25
 offset = 0
 supervisors_db = []
 
@@ -129,8 +137,11 @@ while True:
             "embedding_with_keywords", 
             "averaged_embedding_with_keywords", 
             "bert_averaged_embedding", 
+            "bert_averaged_embedding_with_keywords",
             "scibert_averaged_embedding",
+            "scibert_averaged_embedding_with_keywords",
             "specter2_averaged_embedding",
+            "specter2_averaged_embedding_with_keywords",
         )
         .range(offset, offset + BATCH_SIZE - 1)
         .execute()
