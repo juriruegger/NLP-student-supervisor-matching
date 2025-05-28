@@ -43,7 +43,7 @@ You must add a `.env.local` file to the top of the webapp folder and the top of 
 The prototype uses shadcn/ui for components, tailwind for styling, and is built on the next.js app router architecture. It uses Clerk as the authentication provider and Supabase as the database provider.
 
 The database architecture is as follows
-![Supabase Schema (1)](https://github.com/user-attachments/assets/3c882657-f4a3-4866-855e-44f1e70a343b)
+![Supabase Schema (3)](https://github.com/user-attachments/assets/0baca369-06c4-458c-9b50-a6ca1caaa040)
 
 
 
