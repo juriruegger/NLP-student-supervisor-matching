@@ -64,7 +64,7 @@ export function SelectTopics({ topics, value, onChange }: SelectTopicsProps) {
                     </CommandItem>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {topic.keywords.map(prettify).join(", ")}
+                    {topic.keywords.filter(keyword => keyword.trim() !== "").map(prettify).join(", ")}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

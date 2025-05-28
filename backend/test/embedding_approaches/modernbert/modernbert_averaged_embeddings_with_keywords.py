@@ -32,7 +32,7 @@ def modernbert_averaged_embeddings_with_keywords(supervisors, supervisors_db):
             embedding = embedding.reshape(1, -1)
 
         for supervisor in supervisors:
-            embedding_str = supervisor.get('averaged_embedding_with_keywords', []) # Getting the averaged embedding instead'
+            embedding_str = supervisor.get('modernbert_averaged_embedding_with_keywords', []) # Getting the averaged embedding instead'
 
             if not embedding_str:
                 continue

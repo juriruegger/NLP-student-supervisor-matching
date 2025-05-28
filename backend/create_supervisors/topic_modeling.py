@@ -1,0 +1,179 @@
+from collections import defaultdict
+import os
+import sys
+from dotenv import load_dotenv
+import joblib
+from openai import OpenAI
+from sklearn.feature_extraction.text import CountVectorizer
+from adapters import AutoAdapterModel
+from bertopic import BERTopic
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from backend.create_supervisors.utils import extract_en_abstract, extract_keywords
+
+"""
+Here we create the topic modelling for the supervisors.
+This is done by extracting the keywords from the researchers and optionally their research outputs,
+and then using these keywords to create a topic model using BERTopic.
+The topic model is then used to assign topics to the researchers based on their abstracts.
+The topics are then deduplicated to ensure that there are no duplicate topics.
+These topics are used for the student to match with the supervisors based on research interests.
+"""
+
+# Topic Modelling
+
+specter_topic_model = AutoAdapterModel.from_pretrained('allenai/specter2_base')
+specter_topic_model.load_adapter("allenai/specter2", source="hf", load_as="specter2", set_active=True)
+
+load_dotenv("backend/.env.local")
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI()
+
+used_labels = []
+
+def generate_label(keywords):
+    response = client.responses.create(
+        model="gpt-4o-mini",
+        instructions=(
+            "You are given a cluster of keywords related to a research topic. "
+            "Your task is to generate a concise, general and descriptive label for this topic based on the keywords provided."
+            "The label should be between 1 and 3 words, capturing the research area that these keywords represent."
+            "The labels are to be used for students to choose which research areas they want to work with."
+            "The labels should be as broad, generic and easily understandable as possible."
+            "Avoid uncommon or overly technical words."
+            "The labels should be properly capitalized. So 'Machine Learning in Imaging' instead of 'machine learning in imaging'."
+            "Output only the label text, no explanation."
+        ),
+        input=f"Here are the keywords: \"{', '.join(keywords)}\". The following labels have already been used so please choose another: \"{', '.join(used_labels)}\"."
+    )
+    label = response.output_text.strip()
+    used_labels.append(label)
+    return label
+
+def topic_modelling(researchers, all_researchers):
+    # Getting possible keywords from all researchers and research outputs
+    print("Topic modelling...") 
+    all_keywords = set()
+    for researcher in all_researchers:
+        if not isinstance(researcher, dict):
+            continue
+        all_keywords.update(extract_keywords(researcher))
+
+    print("Number of unique keywords in researchers:", len(all_keywords))
+
+    """ for output in research_outputs:
+        if not isinstance(output, dict):
+            continue
+        all_keywords.update(extract_keywords(output))
+
+    print("Number of unique keywords:", len(all_keywords)) """
+
+    docs = []
+    doc_supervisors = []
+    for researcher in researchers:
+        for abs_obj in researcher.get("abstracts", []):
+            text = extract_en_abstract(abs_obj)
+            if text:
+                docs.append(text)
+                doc_supervisors.append(researcher["uuid"])
+
+
+    vectorizer = CountVectorizer(
+        vocabulary = list(all_keywords),
+        ngram_range = (1, 4),
+        lowercase = True
+    )
+
+    joblib.dump(vectorizer, "vectorizer.joblib")
+
+    topic_model = BERTopic(
+        embedding_model=specter_topic_model,
+        vectorizer_model=vectorizer,
+        calculate_probabilities=True,
+    )
+
+    topics, probs = topic_model.fit_transform(docs)
+
+    topic_model.visualize_topics()
+    topic_model.visualize_barchart()
+
+    supervisor_topic_scores = defaultdict(lambda: defaultdict(float))
+
+    for idx, supervisor_uuid in enumerate(doc_supervisors):
+        label = topics[idx]
+        if label == -1:
+            continue
+        score = probs[idx][label] if probs is not None else 1.0
+        supervisor_topic_scores[supervisor_uuid][label] += float(score)
+
+    topics = {}
+    supervisor_topics = []
+
+    existing_labels = set()
+
+    for researcher in researchers:
+        tid_scores = supervisor_topic_scores.get(researcher["uuid"], {})
+        top_tids = sorted(tid_scores, key=tid_scores.get, reverse=True)
+        topic_ids = []
+        
+        for tid in top_tids:
+            # get top n keywords for the topic
+            n_keywords = 10
+            keywords = [w for w, _ in topic_model.get_topic(tid)[:n_keywords]]
+            label = generate_label(keywords)
+
+            for i in range(n_keywords):
+                if keywords[i] not in existing_labels:
+                    label = keywords[i]
+                    break
+
+            existing_labels.add(label)
+
+            topics[tid] = {               
+                "topic_id": int(tid),
+                "label": label,
+                "keywords": keywords,
+            }
+
+            supervisor_topics.append({
+                "uuid": researcher["uuid"],
+                "topic_id": int(tid),
+                "score": tid_scores[tid],
+            })
+            topic_ids.append(int(tid))
+        researcher["topic_ids"] = topic_ids
+
+    unique_pairs = {}
+    for row in supervisor_topics:
+        key = (row["uuid"], row["topic_id"])
+        if key not in unique_pairs or row["score"] > unique_pairs[key]["score"]:
+            unique_pairs[key] = row
+
+    supervisor_topics = list(unique_pairs.values())
+    
+    unique_topics, supervisor_topics = deduplicate_topics(topics, supervisor_topics)
+    
+    return unique_topics, supervisor_topics
+
+# Some topics can be duplicated, so we ensure they are unique
+def deduplicate_topics(topics, supervisor_topics):
+    key_to_correct_id = {}
+    id_remap = {}
+    unique = []
+    for topic in topics.values():
+        key = (topic["label"], tuple(topic["keywords"]))
+        current_id = topic["topic_id"]
+        if key not in key_to_correct_id:
+            key_to_correct_id[key] = current_id
+            unique.append(topic)
+            continue
+
+        correct_id = key_to_correct_id[key]
+        id_remap[current_id] = correct_id
+
+    for supervisor_topic in supervisor_topics:
+        old_id = supervisor_topic["topic_id"]
+        if old_id in id_remap:
+            supervisor_topic["topic_id"] = id_remap[old_id]    
+
+    return unique, supervisor_topics

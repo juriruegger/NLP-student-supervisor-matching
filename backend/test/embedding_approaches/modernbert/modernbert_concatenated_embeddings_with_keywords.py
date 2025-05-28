@@ -32,7 +32,7 @@ def modernbert_concatenated_embeddings_with_keywords(supervisors, supervisors_db
             embedding = embedding.reshape(1, -1)
 
         for supervisor in supervisors:
-            embedding_str = supervisor.get('embedding_with_keywords', [])
+            embedding_str = supervisor.get('modernbert_concatenated_embedding_with_keywords', [])
 
             if not embedding_str:
                 continue
