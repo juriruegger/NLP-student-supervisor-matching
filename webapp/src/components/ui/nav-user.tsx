@@ -4,11 +4,10 @@ import { SidebarMenu, SidebarMenuItem } from "@/components/ui/sidebar";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 
 type NavUserProps = {
-  username: string | null | undefined;
   userEmail: string | null | undefined;
 };
 
-export function NavUser({ username, userEmail }: NavUserProps) {
+export function NavUser({ userEmail }: NavUserProps) {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -27,8 +26,7 @@ export function NavUser({ username, userEmail }: NavUserProps) {
               />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">{username}</span>
-              <span className="truncate text-xs">{userEmail}</span>
+              <span className="truncate font-semibold">{userEmail}</span>
             </div>
           </SignedIn>
         </div>

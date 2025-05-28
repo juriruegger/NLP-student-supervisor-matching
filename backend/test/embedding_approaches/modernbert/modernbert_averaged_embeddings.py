@@ -27,13 +27,12 @@ def modernbert_averaged_embeddings(supervisors, supervisors_db):
 
     def calculate_suggestions(embedding, supervisors):
         similarities = []
-
         # Ensure embedding is 2D
         if len(embedding.shape) == 1:
             embedding = embedding.reshape(1, -1)
 
         for supervisor in supervisors:
-            embedding_str = supervisor.get('averaged_embedding', []) # Getting the averaged embedding instead'
+            embedding_str = supervisor.get('modernbert_averaged_embedding', []) # Getting the averaged embedding instead'
 
             if not embedding_str:
                 continue

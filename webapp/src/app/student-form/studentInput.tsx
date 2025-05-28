@@ -176,7 +176,7 @@ export function StudentInput({ topics }: { topics: Topics }) {
                     <div className="shadow-md focus-within:shadow-lg transition-shadow duration-300 rounded-2xl border border-border">
                       <FormControl>
                         <Textarea
-                          placeholder="I’d love to explore data privacy using NLP tools, especially in the context of healthcare records…"
+                          placeholder="I would like to explore data privacy using NLP tools, especially in the context of healthcare records…"
                           className="resize-none h-80 w-full rounded-2xl bg-input"
                           {...field}
                         />

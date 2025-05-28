@@ -9,6 +9,11 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
+"""
+This evaluation fetches supervisors and their topics from the database, retrieves researchers from PURE,
+and calculates the percentage of keywords from the database that match those in PURE.
+"""
+
 load_dotenv("backend/.env.local")
 
 url = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
@@ -119,20 +124,3 @@ for supervisor in supervisors_db:
 percent_covered = (intersections / total_pure_keywords) * 100 if total_pure_keywords else 0
 
 print("Percent covered:", percent_covered)
-
-
-anna_db = None
-for supervisor in supervisors_db:
-    name = supervisor.get("name", {})
-    if (
-        name.get("firstName", "").strip().lower() == "anna"
-        and name.get("lastName", "").strip().lower() == "rogers"
-    ):
-        anna_db = supervisor
-        break
-
-if anna_db:
-    anna_db_keywords = assign_supervisor_topics([anna_db], supervisors_db_topics, topics_db)
-    print(f"Assigned topic keywords for Anna Rogers: {sorted(anna_db_keywords)}")
-else:
-    print("Anna Rogers not found in DB supervisors.")

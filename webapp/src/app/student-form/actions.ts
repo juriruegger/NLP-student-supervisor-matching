@@ -43,18 +43,16 @@ export async function storeSuggestions({
   }
 
   const suggestions = await res.json();
-  console.log("Suggestions", suggestions);
+  console.log("Suggestions:", suggestions);
   const topSuggestions = suggestions.slice(0, 5);
-  if (text) {
-    await setStudent(userId, text);
-  }
+  await setStudent(userId);
 
   for (const suggestion of topSuggestions) {
     await setStudentSupervisor({
       userId: userId,
       supervisorId: suggestion.supervisor,
       similarity: suggestion.similarity,
-      topPaper: suggestion.top_paper,
+      topPaper: suggestion.top_paper?.uuid,
     });
   }
 }
