@@ -49,3 +49,7 @@ The database architecture is as follows
 
 
 
+The student_supervisor and supervisor_topic tables are join tables that create many-to-many relationships between `students` and `supervisors`, and `supervisors` and `topics`, respectively.
+
+
+
