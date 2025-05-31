@@ -45,8 +45,7 @@ The prototype uses shadcn/ui for components, tailwind for styling, and is built 
 The database architecture is as follows
 
 
-<img width="1048" alt="image" src="https://github.com/user-attachments/assets/f99f9d3a-f923-4eb4-b5f1-596accf9f073" />
-
+<img width="1105" alt="image" src="https://github.com/user-attachments/assets/d91f7493-16e2-4832-99ec-dd6c8df22f5e" />
 
 
 The student_supervisor and supervisor_topic tables are join tables that create many-to-many relationships between `students` and `supervisors`, and `supervisors` and `topics`, respectively.
