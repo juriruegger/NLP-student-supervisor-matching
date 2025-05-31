@@ -2,17 +2,28 @@ import json
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 import numpy as np
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoTokenizer
+from adapters import AutoAdapterModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 import os
 from supabase import create_client, Client
 
+"""
+The backend application for the supervisor suggestion system.
+This application uses the SPECTER 2 model to generate embeddings for the student text and
+calculates cosine similarities to the supervisors embeddings, fetched from the database, 
+to suggest supervisors based on user input.
+It also supports topic-based suggestions by calculating the similarity of user-selected topics
+to supervisors' topics in the database.
+"""
+
 app = Flask(__name__)
 
-model_id = "answerdotai/ModernBERT-base"
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoModel.from_pretrained(model_id)
+specter_tokenizer = AutoTokenizer.from_pretrained('allenai/specter2_base')
+specter_model = AutoAdapterModel.from_pretrained('allenai/specter2_base')
+
+specter_model.load_adapter("allenai/specter2", source="hf", load_as="specter2", set_active=True)
 
 load_dotenv(".env.local")
 
@@ -28,7 +39,7 @@ supervisors = []
 while True: # Fetching supervisors in batches
     response = (
         supabase.table("supervisor")
-        .select("uuid", "averaged_embedding", "abstracts")
+        .select("uuid", "specter2_averaged_embedding_with_keywords", "abstracts")
         .eq("available", True)
         .range(offset, offset + BATCH_SIZE - 1)
         .execute()
@@ -76,9 +87,10 @@ def api():
         return jsonify({'error': 'Invalid project type'}), 400
 
 def get_embedding(sentence):
-    inputs = tokenizer(sentence, max_length=8192, truncation=True, return_tensors="pt")
+    inputs = specter_tokenizer(sentence, max_length=8192, truncation=True, return_tensors="pt")
     with torch.no_grad():
-        outputs = model(**inputs)
+        outputs = specter_model(**inputs)
+
     mask = inputs["attention_mask"].unsqueeze(-1)
     token_embeddings = outputs.last_hidden_state
     summed = (token_embeddings * mask).sum(dim=1)
@@ -95,7 +107,7 @@ def calculate_suggestions(embedding, supervisors):
         embedding = embedding.reshape(1, -1)
 
     for supervisor in supervisors:
-        embedding_str = supervisor.get('averaged_embedding', [])
+        embedding_str = supervisor.get('specter2_averaged_embedding_with_keywords', [])
 
         if not embedding_str:
             continue
@@ -107,7 +119,6 @@ def calculate_suggestions(embedding, supervisors):
         except ValueError:
             print('Error parsing supervisor embedding')
             continue
-
 
         if embedding.shape[1] != supervisor_embedding.shape[1]:
             continue
@@ -131,7 +142,6 @@ def calculate_suggestions(embedding, supervisors):
             'similarity': suggestion['similarity'],
             'top_paper': top_paper
         })
-
 
     return final_suggestions
 
@@ -159,16 +169,17 @@ def calculate_top_paper(embedding, supervisor):
 
         similarity = cosine_similarity(embedding, abstract_embedding).item()
         similarities.append({
-            'title': abstract.get('title'),
-            'url': abstract.get('url'),
-            'similarity': similarity
+            'uuid': abstract.get('uuid'),
+            'similarity': similarity,
         })
 
     similarities.sort(key=lambda x: x['similarity'], reverse=True)
 
-    top_paper = similarities[0]
-
-    return top_paper
+    if similarities:
+        similarities.sort(key=lambda x: x['similarity'], reverse=True)
+        top_paper = similarities[0]
+        return top_paper
+    return None
 
 def calculate_topic_suggestions(topics, supervisors_topic_db):
     suggested_supervisors = {}

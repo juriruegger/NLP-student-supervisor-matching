@@ -13,10 +13,10 @@ import {
   TopPaper,
 } from "./lib/types";
 
-export async function setStudent(userId: string, text: string) {
+export async function setStudent(userId: string) {
   const { data, error } = await supabase
     .from("student")
-    .upsert({ user_id: userId, text: text })
+    .upsert({ user_id: userId })
     .select();
 
   if (error) {
@@ -44,6 +44,10 @@ export async function getSuggestions(userId: string): Promise<Suggestions> {
 
   const supervisorsPromises = suggestions.map(async (suggestion) => {
     const researcher = await getPerson(suggestion.supervisor_id);
+    let topPaper;
+    if (suggestion.top_paper) {
+      topPaper = await getPaper(suggestion.top_paper);
+    }
     const name = researcher.name?.firstName + " " + researcher.name?.lastName;
     const firstName = researcher.name?.firstName;
     const imageUrl = researcher.profilePhotos?.[0]?.url ?? "";
@@ -109,7 +113,7 @@ export async function getSuggestions(userId: string): Promise<Suggestions> {
       imageUrl: imageUrl,
       organisationalUnits: organisations,
       uuid: researcher.uuid,
-      topPaper: suggestion.top_paper,
+      topPaper: topPaper,
       keywords: keywords,
     };
   });
@@ -119,14 +123,7 @@ export async function getSuggestions(userId: string): Promise<Suggestions> {
 }
 
 async function getPerson(uuid: string) {
-  const API_KEY = process.env.PURE_API;
-  const BASE_URL = process.env.PURE_BASE_URL;
-
-  if (!API_KEY || !BASE_URL) {
-    throw new Error(
-      "Environment variables PURE_API and PURE_BASE_URL must be set",
-    );
-  }
+  const { API_KEY, BASE_URL } = await getPure();
 
   const response = await fetch(`${BASE_URL}/persons/${uuid}`, {
     method: "GET",
@@ -144,15 +141,33 @@ async function getPerson(uuid: string) {
   return person;
 }
 
-async function getOrganisation(uuid: string) {
-  const API_KEY = process.env.PURE_API;
-  const BASE_URL = process.env.PURE_BASE_URL;
+async function getPaper(uuid: string) {
+  const { API_KEY, BASE_URL } = await getPure();
 
-  if (!API_KEY || !BASE_URL) {
-    throw new Error(
-      "Environment variables PURE_API and PURE_BASE_URL must be set",
-    );
+  const response = await fetch(`${BASE_URL}/research-outputs/${uuid}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      "api-key": API_KEY,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Fetching error for getPaper: ${response.status}`);
   }
+
+  const paper = await response.json();
+  const title = paper.title.value;
+  const url = paper.portalUrl;
+
+  const paperToReturn: TopPaper = {
+    title: title,
+    url: url,
+  };
+  return paperToReturn;
+}
+
+async function getOrganisation(uuid: string) {
+  const { API_KEY, BASE_URL } = await getPure();
 
   const response = await fetch(`${BASE_URL}/organizations/${uuid}`, {
     method: "GET",
@@ -186,7 +201,7 @@ type setStudentSupervisorType = {
   userId: string;
   supervisorId: string;
   similarity: number;
-  topPaper?: TopPaper;
+  topPaper?: string;
 };
 export async function setStudentSupervisor({
   userId,
@@ -194,11 +209,6 @@ export async function setStudentSupervisor({
   similarity,
   topPaper,
 }: setStudentSupervisorType) {
-  console.log("____________________");
-  console.log("userId", userId);
-  console.log("supervisorId", supervisorId);
-  console.log("similarity", similarity);
-  console.log("topPaper", topPaper);
   const { data, error } = await supabase
     .from("student_supervisor")
     .upsert({
@@ -287,4 +297,17 @@ export async function storeDBAvailability(available: boolean) {
 export async function getEmail() {
   const user = await currentUser();
   return user?.emailAddresses[0].emailAddress;
+}
+
+async function getPure() {
+  const API_KEY = process.env.PURE_API;
+  const BASE_URL = process.env.PURE_BASE_URL;
+
+  if (!API_KEY || !BASE_URL) {
+    throw new Error(
+      "Environment variables PURE_API and PURE_BASE_URL must be set",
+    );
+  }
+
+  return { API_KEY, BASE_URL };
 }

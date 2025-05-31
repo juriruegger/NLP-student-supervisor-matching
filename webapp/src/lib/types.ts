@@ -33,7 +33,6 @@ export type OrganisationalUnits = OrganisationalUnit[];
 export type TopPaper = {
   title: string;
   url: string;
-  similarity: number;
 };
 
 export type Keyword = {
@@ -64,7 +63,7 @@ export type Suggestion = {
   imageUrl: string;
   organisationalUnits: OrganisationalUnits;
   uuid: string;
-  topPaper: TopPaper;
+  topPaper: TopPaper | undefined;
   keywords: string[];
 };
 
