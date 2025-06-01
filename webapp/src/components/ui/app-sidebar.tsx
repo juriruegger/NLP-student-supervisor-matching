@@ -82,7 +82,6 @@ export async function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <NavUser
-          username={user?.fullName}
           userEmail={user?.primaryEmailAddress?.emailAddress}
         />
       </SidebarFooter>

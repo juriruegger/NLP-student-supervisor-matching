@@ -16,6 +16,12 @@ export function Homepage() {
       <p>{content.homepage.text1}</p>
       <p>{content.homepage.text2}</p>
       <p>{content.homepage.text3}</p>
+      <p className="text-red-500">
+        Note to examinators: The backend deployment is running on serverless,
+        meaning that cold starts will likely occur the first you submit your
+        form or chosen topics. If this is the case, please just refresh the
+        page, and it should work.
+      </p>
       <div className="flex justify-center">
         <Link href="/student-form">
           <Button>Begin</Button>
