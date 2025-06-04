@@ -1,10 +1,16 @@
-import pandas as pd
+"""
+Workflow 2: Supervisor-Topic Keyword Similarity Analysis
+
+This script analyzes the similarity between supervisor keywords in the database
+and those available from the PURE API. It helps validate the keyword extraction
+and topic modeling process by comparing database-stored keywords with the 
+original PURE API keyword data.
+"""
+
 import os
 from dotenv import load_dotenv
 import requests
 from supabase import create_client, Client
-import matplotlib.pyplot as plt
-import seaborn as sns
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -74,6 +80,9 @@ persons = response.json()
 supervisors_pure = persons.get("items", [])
 
 def extract_keywords(obj):
+    """
+    Extracts free keywords from PURE API keyword groups structure.
+    """
     keywords = set()
     for keyWordGroup in obj.get("keywordGroups", []):
         if not isinstance(keyWordGroup, dict):
@@ -88,6 +97,9 @@ def extract_keywords(obj):
     return keywords
 
 def calculate_similarity(db_keywords, pure_keywords):
+    """
+    Calculates keyword overlap similarity between database and PURE keywords.
+    """
     if not pure_keywords:
         return 0
     db_keywords = set(db_keywords)

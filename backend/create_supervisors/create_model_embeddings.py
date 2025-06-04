@@ -12,13 +12,22 @@ Note that ModernBERT handles both concatenated and averaged embeddings, and ther
 """
 
 def average_pooling(embeddings):
-        return torch.mean(torch.stack(embeddings), dim=0)
+    """
+    Computes the average of a list of embedding tensors.
+    """
+    return torch.mean(torch.stack(embeddings), dim=0)
 
 modernbert_model_id = "answerdotai/ModernBERT-base"
 modernbert_tokenizer = AutoTokenizer.from_pretrained(modernbert_model_id)
 modernbert_model = AutoModel.from_pretrained(modernbert_model_id)
 
 def get_modernbert_embeddings(supervisors):
+    """
+    Generates ModernBERT embeddings for supervisors' abstracts and keywords.
+    
+    Creates both concatenated and averaged embeddings, with and without keywords,
+    for each supervisor's abstracts. Updates supervisor records in-place.
+    """
     def embed(text):
         inputs = modernbert_tokenizer(text, max_length=8192, truncation=True, return_tensors="pt")
         with torch.no_grad():

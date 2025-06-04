@@ -10,7 +10,20 @@ tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModel.from_pretrained(model_id)
 
 def modernbert_averaged_embeddings(supervisors, supervisors_db):
+    """
+    Evaluates supervisor proposals using ModernBERT averaged embeddings approach.
+    
+    Parameters:
+        supervisors: List of supervisors with their proposals to evaluate
+        supervisors_db: List of supervisor records from database with embeddings
+
+    Returns:
+        The MRR score for the ModernBERT embedding approach.
+    """
     def embed(text):
+        """
+        Generates ModernBERT embedding for input text using mean pooling.
+        """
         inputs = tokenizer(text, max_length=8192, truncation=True, return_tensors="pt")
         input_length = len(inputs["input_ids"][0])
         with torch.no_grad():
@@ -26,6 +39,9 @@ def modernbert_averaged_embeddings(supervisors, supervisors_db):
         return mean_pooled.squeeze().detach(), input_length
 
     def calculate_suggestions(embedding, supervisors):
+        """
+        Calculates cosine similarities between student embedding and supervisor embeddings.
+        """
         similarities = []
         # Ensure embedding is 2D
         if len(embedding.shape) == 1:

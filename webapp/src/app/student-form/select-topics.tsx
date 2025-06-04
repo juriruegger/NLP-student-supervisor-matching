@@ -24,6 +24,13 @@ export type SelectTopicsProps = {
   onChange: (value: Topic[]) => void;
 };
 
+/**
+ * The multi-select component for choosing topics.
+ *
+ * Displays selected topics as badges with the ability to remove them,
+ * and allows searching and selecting topics.
+ * Each topic displays its keywords as a tooltip.
+ */
 export function SelectTopics({ topics, value, onChange }: SelectTopicsProps) {
   const selected = useMemo(() => value ?? [], [value]);
 
@@ -64,7 +71,10 @@ export function SelectTopics({ topics, value, onChange }: SelectTopicsProps) {
                     </CommandItem>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {topic.keywords.filter(keyword => keyword.trim() !== "").map(prettify).join(", ")}
+                    {topic.keywords
+                      .filter((keyword) => keyword.trim() !== "")
+                      .map(prettify)
+                      .join(", ")}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -76,7 +86,10 @@ export function SelectTopics({ topics, value, onChange }: SelectTopicsProps) {
   );
 }
 
-// We capitalize the first letter of each word and lowercase the rest unless it's an acronym where we capitalize the whole word.
+/**
+ * Prettifies a string by capitalizing the first letter of each word,
+ * while preserving acronyms in uppercase.
+ */
 export function prettify(text: string): string {
   return text
     .split(" ")

@@ -19,6 +19,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+/**
+ * SuggestionCard component displays a detailed view of a supervisor suggestion.
+ * Features expandable content, contact tracking, and interactive elements.
+ */
 export function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
   const [expanded, setExpanded] = useState(false);
   const [contacted, setContacted] = useState(false);
@@ -136,8 +140,8 @@ export function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
                         suggestion.organisationalUnits.map((organisation) => [
                           organisation.name,
                           organisation,
-                        ])
-                      ).values()
+                        ]),
+                      ).values(),
                     ).map((organisation, idx) => (
                       <li key={idx} className="flex items-center space-x-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />

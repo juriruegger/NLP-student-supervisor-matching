@@ -26,9 +26,7 @@ from backend.test.embedding_approaches.specter.specter2_averaged_with_keywords i
 """
 The MRR evaluation for supervisor proposals and GPT-generated proposals.
 This script evaluates the performance of various embedding approaches and models
-by calculating the Mean Reciprocal Rank (MRR) for supervisor proposals and GPT-generated proposals.
-It uses the Supabase client to fetch supervisor data and proposals,
-and calculates the MRR for each approach and model.
+by calculating the Mean Reciprocal Rank for supervisor proposals and GPT-generated proposals.
 """
 
 load_dotenv("backend/.env.local")
@@ -42,34 +40,42 @@ PURE_API_KEY = os.environ.get("PURE_API_KEY")
 PURE_BASE_URL = os.environ.get("PURE_BASE_URL")
 
 def fetch_supervisor_name(uuid):
-    person_url = f"{PURE_BASE_URL}/persons/{uuid}"
-    person_headers = {
-        "accept": "application/json", 
-        "api-key": PURE_API_KEY,
-    }
-    response = requests.get(person_url, headers=person_headers)
-    response.raise_for_status()
-    person = response.json()
-    name = person.get("name", {})
+    try:
+        person_url = f"{PURE_BASE_URL}/persons/{uuid}"
+        person_headers = {
+            "accept": "application/json", 
+            "api-key": PURE_API_KEY,
+        }
+        response = requests.get(person_url, headers=person_headers)
+        response.raise_for_status()
+        person = response.json()
+        name = person.get("name", {})
 
-    if name:
-        return name
-    return None
+        if name:
+            return name
+        return None
+    except Exception as e:
+        print(f"Error fetching supervisor name: {e}")
+        return None
 
 def fetch_supervisor_abstract_text(uuid):
-    paper_url = f"{PURE_BASE_URL}/research-outputs/{uuid}"
-    paper_headers = {
-        "accept": "application/json",
-        "api-key": PURE_API_KEY,
-    }
-    response = requests.get(paper_url, headers=paper_headers)
-    response.raise_for_status()
-    paper = response.json()
-    abstract_text = paper.get("abstract", {}).get("en_GB", "")
+    try:
+        paper_url = f"{PURE_BASE_URL}/research-outputs/{uuid}"
+        paper_headers = {
+            "accept": "application/json",
+            "api-key": PURE_API_KEY,
+        }
+        response = requests.get(paper_url, headers=paper_headers)
+        response.raise_for_status()
+        paper = response.json()
+        abstract_text = paper.get("abstract", {}).get("en_GB", "")
 
-    if abstract_text:
-        return abstract_text
-    return None
+        if abstract_text:
+            return abstract_text
+        return None
+    except Exception as e:
+        print(f"Error fetching supervisor abstract text: {e}")
+        return None
 
 def evaluate_proposals(proposals, supervisors_db, label):
 

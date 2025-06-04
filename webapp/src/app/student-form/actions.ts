@@ -15,13 +15,21 @@ type textSuggestionType = {
   projectType?: ProjectType;
 };
 
+/**
+ * Stores supervisor suggestions for a student based on provided project details.
+ *
+ * This function performs the following steps:
+ * 1. Deletes any existing supervisor suggestions for the user.
+ * 2. Sends a POST request to the backend with the student's project text, topics, and project type.
+ * 3. Parses the returned suggestions and associates each suggested supervisor with the student.
+ */
 export async function storeSuggestions({
   text,
   topics,
   projectType,
 }: textSuggestionType) {
   const userId = await getUserId();
-  
+
   await deleteStudentSupervisors(userId);
 
   const URL = process.env.BACKEND_URL;
@@ -43,11 +51,9 @@ export async function storeSuggestions({
   }
 
   const suggestions = await res.json();
-  console.log("Suggestions:", suggestions);
-  const topSuggestions = suggestions.slice(0, 5);
   await setStudent(userId);
 
-  for (const suggestion of topSuggestions) {
+  for (const suggestion of suggestions) {
     await setStudentSupervisor({
       userId: userId,
       supervisorId: suggestion.supervisor,
@@ -57,7 +63,11 @@ export async function storeSuggestions({
   }
 }
 
+/**
+ * Retrieves the list of topics from the database.
+ */
 export async function getTopics() {
   const topics = await getDbTopics();
-  return topics;
+  const sortedTopics = topics.sort((a, b) => a.label.localeCompare(b.label));
+  return sortedTopics;
 }
