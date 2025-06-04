@@ -27,8 +27,6 @@ from backend.test.embedding_approaches.specter.specter2_averaged_with_keywords i
 The MRR evaluation for supervisor proposals and GPT-generated proposals.
 This script evaluates the performance of various embedding approaches and models
 by calculating the Mean Reciprocal Rank (MRR) for supervisor proposals and GPT-generated proposals.
-It uses the Supabase client to fetch supervisor data and proposals,
-and calculates the MRR for each approach and model.
 """
 
 load_dotenv("backend/.env.local")

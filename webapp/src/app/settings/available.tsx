@@ -15,6 +15,9 @@ type SupervisorUnavailableProps = {
   available: boolean | undefined;
 };
 
+/**
+ * Renders a select dropdown allowing a supervisor to set their availability status.
+ */
 export function SupervisorAvailable({ available }: SupervisorUnavailableProps) {
   const [availability, setAvailability] = useState<boolean>(available ?? true);
 

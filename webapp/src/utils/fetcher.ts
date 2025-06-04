@@ -1,5 +1,9 @@
 import fetch from "node-fetch";
 
+/**
+ * Fetches an image from a URL and converts it to a base64 data URL.
+ * Uses PURE API key for authentication when fetching supervisor profile images.
+ */
 export async function fetchImage(imageUrl: string): Promise<string> {
   try {
     const response = await fetch(imageUrl, {

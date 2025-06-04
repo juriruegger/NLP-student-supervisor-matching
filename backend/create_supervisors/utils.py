@@ -7,6 +7,9 @@ This module provides functions to extract keywords, abstracts, emails, and valid
 """
 
 def extract_keywords(obj):
+    """
+    Extract and normalize keywords from a supervisor's research data.
+    """
     keywords = set()
     for keyWordGroup in obj.get("keywordGroups", []):
         if not isinstance(keyWordGroup, dict):
@@ -21,11 +24,17 @@ def extract_keywords(obj):
     return keywords
 
 def extract_en_abstract(abstract_obj):
+    """
+    Extract English abstract text from abstract object.
+    """
     if not isinstance(abstract_obj, dict):
         return ""
     return (abstract_obj.get("abstract", {}).get("en_GB", "") or "")
 
 def extract_email(person):
+    """
+    Extract primary email address from person's organizational associations.
+    """
     for association in person.get("staffOrganizationAssociations", []):
         emails = association.get("emails", [])
         if emails:
@@ -35,4 +44,7 @@ def extract_email(person):
     return None
 
 def valid_supervisor_topic(x):
+    """
+    Validate if a supervisor topic value is valid (not NaN or infinite).
+    """
     return isinstance(x, (int, float)) and not (math.isnan(x) or math.isinf(x))
