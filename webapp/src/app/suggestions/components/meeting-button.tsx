@@ -9,6 +9,10 @@ type MeetingButtonProps = {
   setContacted: (contacted: boolean) => void;
 };
 
+/**
+ * Renders a button that allows the user to send an email to a supervisor to request a research project meeting.
+ * When clicked, the button triggers the `contactSupervisor` function with the supervisor's UUID and updates the contacted state.
+ */
 export function MeetingButton({
   suggestion,
   setContacted,

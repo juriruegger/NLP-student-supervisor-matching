@@ -55,6 +55,13 @@ const formSchema = z.discriminatedUnion("projectType", [
   }),
 ]);
 
+/**
+ * Renders a form for students to input their project preferences,
+ * either by selecting general topics or describing a specific project idea.
+ * Upon submission, it stores the suggestions and navigates to the suggestions page.
+ *
+ * @param topics - The list of possible topics for the student to select from when choosing a general project idea.
+ */
 export function StudentInput({ topics }: { topics: Topics }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -68,6 +75,7 @@ export function StudentInput({ topics }: { topics: Topics }) {
   });
 
   useEffect(() => {
+    // Load saved form from localStorage, see below
     const raw = localStorage.getItem("student-input");
     if (!raw) return;
     try {
@@ -80,6 +88,7 @@ export function StudentInput({ topics }: { topics: Topics }) {
   }, [form]);
 
   useEffect(() => {
+    // Save form state to localStorage on change, to avoid empty fields on page reload
     const subscription = form.watch((value) => {
       localStorage.setItem("student-input", JSON.stringify(value));
     });

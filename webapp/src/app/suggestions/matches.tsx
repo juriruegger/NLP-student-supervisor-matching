@@ -9,6 +9,11 @@ type MatchesProps = {
   suggestions: Suggestion[];
 };
 
+/**
+ * Renders a list of suggested supervisor matches based on the user's research interests.
+ *
+ * @param suggestions - An array of the suggested supervisors.
+ */
 export default function Matches({ suggestions }: MatchesProps) {
   return (
     <div className="space-y-8">

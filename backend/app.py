@@ -54,8 +54,23 @@ while True: # Fetching supervisors in batches
 response = supabase.table("supervisor_topic").select("*").execute()
 supervisors_topic_db = response.data
 
+NUM_OF_SUPERVISORS = 5
+
 @app.route('/api', methods=['POST'])
 def api(): 
+    """
+    API endpoint to suggest supervisors based on project type and input data.
+    Expects the following structure:
+        projectType: "specific" or "general"
+        - If "specific": 
+            text: The project description text.
+        - If "general": 
+            topics: List of topics related to the project.
+    Returns:
+        - For "specific": JSON list of 6 supervisor suggestions based on text embedding similarity.
+        - For "general": JSON list of up to 6 supervisor suggestions based on topic similarity, each with supervisor ID and similarity score.
+        - On error: JSON object with an 'error' message and HTTP 400 status code.
+    """
     data = request.get_json()
     project_type = data.get('projectType')
     if project_type == "specific":
@@ -74,7 +89,7 @@ def api():
 
         suggestions = calculate_topic_suggestions(topics, supervisors_topic_db)
         sorted_suggestions = sorted(suggestions.items(), key=lambda x: x[1], reverse=True)
-        top_suggestions = sorted_suggestions[:5]
+        top_suggestions = sorted_suggestions[:NUM_OF_SUPERVISORS]
         final_suggestions = []
         for supervisor_id, score in top_suggestions:
             final_suggestions.append({
@@ -87,6 +102,9 @@ def api():
         return jsonify({'error': 'Invalid project type'}), 400
 
 def get_embedding(sentence):
+    """
+    Generates a mean-pooled embedding for a given sentence using the SPECTER model.
+    """
     inputs = specter_tokenizer(sentence, max_length=8192, truncation=True, return_tensors="pt")
     with torch.no_grad():
         outputs = specter_model(**inputs)
@@ -100,6 +118,15 @@ def get_embedding(sentence):
     return mean_pooled.squeeze().detach() 
 
 def calculate_suggestions(embedding, supervisors):
+    """
+    Calculates and returns a list of supervisor suggestions based on the cosine similarity
+    between a given embedding and each supervisor's embedding.
+
+    Returns a list of dictionaries, each containing:
+        - 'supervisor' (str): The UUID of the suggested supervisor.
+        - 'similarity' (float): The cosine similarity score between the input embedding and the supervisor's embedding.
+        - 'top_paper' (Any): The result of the calculate_top_paper function for the supervisor.
+    """
     similarities = []
 
     # Ensure embedding is 2D
@@ -131,7 +158,7 @@ def calculate_suggestions(embedding, supervisors):
         })
 
     similarities.sort(key=lambda x: x['similarity'], reverse=True)
-    top_suggestions = similarities[:5]
+    top_suggestions = similarities[:NUM_OF_SUPERVISORS]
 
     final_suggestions = []
     for suggestion in top_suggestions:
@@ -146,6 +173,11 @@ def calculate_suggestions(embedding, supervisors):
     return final_suggestions
 
 def calculate_top_paper(embedding, supervisor):
+    """
+    Calculates the most similar abstract for a given embedding from a supervisor's list of abstracts.
+
+    Returns a dictionary with the 'uuid' and 'similarity' of the most similar abstract, or None if no valid abstracts are found.
+    """
     abstracts = supervisor.get('abstracts', [])
 
     if not abstracts:
@@ -182,6 +214,11 @@ def calculate_top_paper(embedding, supervisor):
     return None
 
 def calculate_topic_suggestions(topics, supervisors_topic_db):
+    """
+    Calculates suggested supervisors based on the overlap between provided topics and a database of supervisor-topic associations.
+
+    Returns a dictionary mapping supervisor UUIDs to their accumulated suggestion scores based on matching topics.
+    """
     suggested_supervisors = {}
 
     for supervisor_topic in supervisors_topic_db:

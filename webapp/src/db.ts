@@ -13,6 +13,9 @@ import {
   TopPaper,
 } from "./lib/types";
 
+/**
+ * Creates or updates a student record in the database.
+ */
 export async function setStudent(userId: string) {
   const { data, error } = await supabase
     .from("student")
@@ -26,6 +29,10 @@ export async function setStudent(userId: string) {
   return data;
 }
 
+/**
+ * Retrieves and processes supervisor suggestions for a given student.
+ * Fetches supervisor details from PURE API and maps them to suggestion format.
+ */
 export async function getSuggestions(userId: string): Promise<Suggestions> {
   const { data: suggestions, error } = await supabase
     .from("student_supervisor")
@@ -122,6 +129,9 @@ export async function getSuggestions(userId: string): Promise<Suggestions> {
   return supervisors;
 }
 
+/**
+ * Fetches person details from the PURE.
+ */
 async function getPerson(uuid: string) {
   const { API_KEY, BASE_URL } = await getPure();
 
@@ -141,6 +151,9 @@ async function getPerson(uuid: string) {
   return person;
 }
 
+/**
+ * Retrieves research paper details from PURE by the UUID of the research output.
+ */
 async function getPaper(uuid: string) {
   const { API_KEY, BASE_URL } = await getPure();
 
@@ -166,6 +179,9 @@ async function getPaper(uuid: string) {
   return paperToReturn;
 }
 
+/**
+ * Fetches organization details from PURE by UUID.
+ */
 async function getOrganisation(uuid: string) {
   const { API_KEY, BASE_URL } = await getPure();
 
@@ -181,6 +197,10 @@ async function getOrganisation(uuid: string) {
   return organisation;
 }
 
+/**
+ * Marks a supervisor as contacted by a specific student.
+ * Updates the student-supervisor relationship in the database.
+ */
 export async function setContacted(userId: string, supervisorId: string) {
   const { data: contacted, error } = await supabase
     .from("student_supervisor")
@@ -203,6 +223,10 @@ type setStudentSupervisorType = {
   similarity: number;
   topPaper?: string;
 };
+
+/**
+ * Creates or updates a student-supervisor relationship with similarity score.
+ */
 export async function setStudentSupervisor({
   userId,
   supervisorId,
@@ -226,6 +250,10 @@ export async function setStudentSupervisor({
   return data;
 }
 
+/**
+ * Removes all supervisor suggestions for a specific student.
+ * Used when generating new suggestions to clear old ones.
+ */
 export async function deleteStudentSupervisors(userId: string) {
   const { data, error } = await supabase
     .from("student_supervisor")
@@ -240,6 +268,9 @@ export async function deleteStudentSupervisors(userId: string) {
   return { data };
 }
 
+/**
+ * Retrieves the current authenticated user's ID from Clerk.
+ */
 export async function getUserId() {
   const { userId } = await auth();
   if (!userId) {
@@ -248,6 +279,10 @@ export async function getUserId() {
   return userId;
 }
 
+/**
+ * Fetches all available topics from the database.
+ * Maps database field names to TypeScript property names.
+ */
 export async function getDbTopics() {
   const { data: topics, error } = await supabase.from("topic").select("*");
 
@@ -263,6 +298,9 @@ export async function getDbTopics() {
   return mappedTopics as Topic[];
 }
 
+/**
+ * Retrieves the availability status for the current supervisor.
+ */
 export async function getDBAvailability() {
   const email = await getEmail();
 
@@ -274,11 +312,14 @@ export async function getDBAvailability() {
 
   if (error) {
     console.error("Failed to get availability", error);
-  } 
+  }
 
   return data?.available;
 }
 
+/**
+ * Updates or creates a supervisor's availability status in the database.
+ */
 export async function storeDBAvailability(available: boolean) {
   const email = await getEmail();
   const { data, error } = await supabase
@@ -294,11 +335,17 @@ export async function storeDBAvailability(available: boolean) {
   return data;
 }
 
+/**
+ * Gets the email address of the currently authenticated user (used to authorize Supervisor availability).
+ */
 export async function getEmail() {
   const user = await currentUser();
   return user?.emailAddresses[0].emailAddress;
 }
 
+/**
+ * Retrieves PURE API credentials from environment variables.
+ */
 async function getPure() {
   const API_KEY = process.env.PURE_API;
   const BASE_URL = process.env.PURE_BASE_URL;

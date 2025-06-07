@@ -13,7 +13,10 @@ import {
 } from "@/components/ui/sidebar";
 import { NavUser } from "./nav-user";
 import { currentUser } from "@clerk/nextjs/server";
-// Menu items.
+
+/**
+ * Main navigation items for the application sidebar.
+ */
 const items = [
   {
     title: "Home",
@@ -81,9 +84,7 @@ export async function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser
-          userEmail={user?.primaryEmailAddress?.emailAddress}
-        />
+        <NavUser userEmail={user?.primaryEmailAddress?.emailAddress} />
       </SidebarFooter>
     </Sidebar>
   );
