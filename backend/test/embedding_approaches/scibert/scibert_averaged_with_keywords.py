@@ -10,6 +10,16 @@ tokenizer = BertTokenizer.from_pretrained(model_id)
 model = BertModel.from_pretrained(model_id)
 
 def scibert_averaged_embeddings_with_keywords(supervisors, supervisors_db):
+    """
+    Evaluates supervisor proposals using SciBERT averaged embeddings with keywords approach.
+    
+    Parameters:
+        supervisors: List of supervisors with their proposals to evaluate
+        supervisors_db: List of supervisor records from database with keyword embeddings
+
+    Returns:
+        The MRR score for the SciBERT embedding approach with keywords.
+    """
     def embed(text):
         inputs = tokenizer(text, max_length=512, padding="max_length", truncation=True, return_tensors="pt")
         with torch.no_grad():

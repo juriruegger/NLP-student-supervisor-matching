@@ -21,19 +21,18 @@ These topics are used for the student to match with the supervisors based on res
 """
 
 # Topic Modelling
-
-specter_topic_model = AutoAdapterModel.from_pretrained('allenai/specter2_base')
-specter_topic_model.load_adapter("allenai/specter2", source="hf", load_as="specter2", set_active=True)
-
 load_dotenv("backend/.env.local")
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI()
+
+specter_topic_model = AutoAdapterModel.from_pretrained('allenai/specter2_base')
+specter_topic_model.load_adapter("allenai/specter2", source="hf", load_as="specter2", set_active=True)
 
 used_labels = []
 
 def generate_label(keywords):
     response = client.responses.create(
-        model="gpt-4o-mini",
+        model="gpt-4.1-mini", #Changed to gpt-4.1-mini from gpt-4o-mini for better performance
         instructions=(
             "You are given a cluster of keywords related to a research topic. "
             "Your task is to generate a concise, general and descriptive label for this topic based on the keywords provided."
@@ -43,8 +42,12 @@ def generate_label(keywords):
             "Avoid uncommon or overly technical words."
             "The labels should be properly capitalized. So 'Machine Learning in Imaging' instead of 'machine learning in imaging'."
             "Output only the label text, no explanation."
+            "Examples: Algorithms and Datastructures, Natural Language Processing, Game Design, Software Engineering."
         ),
-        input=f"Here are the keywords: \"{', '.join(keywords)}\". The following labels have already been used so please choose another: \"{', '.join(used_labels)}\"."
+        input=(f"Here are the keywords in the cluster: \"{', '.join(keywords)}\". "
+        f"The following labels have already been used so choose another: \"{', '.join(used_labels)}\". "
+        f"Labels are not to be reused."
+        )
     )
     label = response.output_text.strip()
     used_labels.append(label)
@@ -70,12 +73,15 @@ def topic_modelling(researchers, all_researchers):
 
     docs = []
     doc_supervisors = []
+    doc_abstracts = []
+
     for researcher in researchers:
-        for abs_obj in researcher.get("abstracts", []):
-            text = extract_en_abstract(abs_obj)
+        for abstract in researcher.get("abstracts", []):
+            text = extract_en_abstract(abstract)
             if text:
                 docs.append(text)
                 doc_supervisors.append(researcher["uuid"])
+                doc_abstracts.append(abstract)
 
 
     vectorizer = CountVectorizer(
@@ -94,17 +100,21 @@ def topic_modelling(researchers, all_researchers):
 
     topics, probs = topic_model.fit_transform(docs)
 
-    topic_model.visualize_topics()
-    topic_model.visualize_barchart()
-
     supervisor_topic_scores = defaultdict(lambda: defaultdict(float))
 
+    for idx, prob_vec in enumerate(probs):
+        topic_dict = {}
+        for topic_id, score in enumerate(prob_vec):
+            topic_dict[str(topic_id)] = float(score)
+
+        doc_abstracts[idx]["topics"] = topic_dict
+
     for idx, supervisor_uuid in enumerate(doc_supervisors):
-        label = topics[idx]
-        if label == -1:
+        topic_id = topics[idx]
+        if topic_id == -1:
             continue
-        score = probs[idx][label] if probs is not None else 1.0
-        supervisor_topic_scores[supervisor_uuid][label] += float(score)
+        score = probs[idx][topic_id]
+        supervisor_topic_scores[supervisor_uuid][topic_id] += float(score)
 
     topics = {}
     supervisor_topics = []
@@ -152,8 +162,10 @@ def topic_modelling(researchers, all_researchers):
     supervisor_topics = list(unique_pairs.values())
     
     unique_topics, supervisor_topics = deduplicate_topics(topics, supervisor_topics)
-    
-    return unique_topics, supervisor_topics
+
+    unique_labeled_topics = unique_labels(unique_topics)
+
+    return unique_labeled_topics, supervisor_topics
 
 # Some topics can be duplicated, so we ensure they are unique
 def deduplicate_topics(topics, supervisor_topics):
@@ -177,3 +189,29 @@ def deduplicate_topics(topics, supervisor_topics):
             supervisor_topic["topic_id"] = id_remap[old_id]    
 
     return unique, supervisor_topics
+
+def unique_labels(topics):
+    used_labels = set()
+    for topic in topics:
+        label = topic.get("label")
+        if label in used_labels or label == "":
+            response = client.responses.create(
+            model="gpt-4.1-mini",
+            instructions=(
+                "The label given already used in another topic. "
+                "Your task is to provide a different label that is not already used. "
+                "The label should capture the meaning of the keywords, but should not be the same as any of the existing labels. "
+            ),
+            input=(f"The label '{label}' is already used. Please provide a different label that is not already used. "
+            f"The following labels have already been used: {', '.join(used_labels)}. "
+            f"The label should be between 1 and 3 words, capturing the research area that these keywords represent. "
+            f"The label is meant to represent these keywords: {', '.join(topic['keywords'])}. "
+            f"Output only the label text, no explanation."
+            )
+            )
+            label = response.output_text.strip()
+            used_labels.add(label)
+            topic["label"] = label
+        else:
+            used_labels.add(label)
+    return topics

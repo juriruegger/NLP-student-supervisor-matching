@@ -46,9 +46,11 @@ for researcher in researchers:
             continue
         abstract_text = abstract.get("abstract").get("en_GB")
         abstract_uuid = abstract.get("uuid")
+        abstract_topics = abstract.get("topics", {})
         abstracts_list.append({
             "text": abstract_text,
-            "uuid": abstract_uuid
+            "uuid": abstract_uuid,
+            "topics": abstract_topics,
         })
 
     supervisor_updates.append({

@@ -11,6 +11,16 @@ specter_model = AutoAdapterModel.from_pretrained('allenai/specter2_base')
 specter_model.load_adapter("allenai/specter2", source="hf", load_as="specter2", set_active=True)
 
 def specter2_averaged_embeddings_with_keywords(supervisors, supervisors_db):
+    """
+    Evaluates supervisor proposals using SPECTER 2 averaged embeddings with keywords approach.
+    
+    Parameters:
+        supervisors: List of supervisors with their proposals to evaluate
+        supervisors_db: List of supervisor records from database with keyword embeddings
+
+    Returns:
+        The MRR score for the SPECTER 2 embedding approach with keywords.
+    """
     def embed(text):
         inputs = specter_tokenizer(
             text,

@@ -3,6 +3,16 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 def tfidf_baseline(supervisors, supervisors_db):
+    """
+    Baseline evaluation using TF-IDF vectorization and cosine similarity.
+    
+    Parameters:
+        supervisors: List of supervisors with their proposals to evaluate
+        supervisors_db: List of supervisor records from database with abstracts
+        
+    Returns:
+        The Mean Reciprocal Rank score for the TF-IDF baseline approach
+    """
     reciprocal_ranks = []
     
     for supervisor in supervisors:
@@ -22,6 +32,9 @@ def tfidf_baseline(supervisors, supervisors_db):
     return mrr
 
 def calculate_tfidf_similarities(query_text, supervisors_db):
+    """
+    Calculates TF-IDF similarities between query text and supervisor abstracts.
+    """
     corpus = [query_text]
     supervisor_map = []
     

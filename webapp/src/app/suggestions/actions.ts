@@ -4,6 +4,9 @@ import { getSuggestions, getUserId, setContacted } from "@/db";
 import { Suggestion, Suggestions } from "@/lib/types";
 import { fetchImage } from "@/utils/fetcher";
 
+/**
+ * Retrieves supervisor suggestions, processes their images, and sorts them by similarity.
+ */
 export async function getUserSuggestions(): Promise<Suggestions> {
   const userId = await getUserId();
   const suggestions = await getSuggestions(userId);
@@ -34,6 +37,9 @@ export async function getUserSuggestions(): Promise<Suggestions> {
   return suggestions;
 }
 
+/**
+ * Marks a supervisor as contacted by the current user.
+ */
 export async function contactSupervisor(supervisor: string) {
   const userId = await getUserId();
   await setContacted(userId, supervisor);

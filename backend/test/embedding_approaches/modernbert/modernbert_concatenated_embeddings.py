@@ -10,6 +10,16 @@ tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = AutoModel.from_pretrained(model_id)
 
 def modernbert_concatenated_embeddings(supervisors, supervisors_db):
+    """
+    Evaluates supervisor proposals using ModernBERT concatenated embeddings approach.
+
+    Parameters:
+        supervisors: List of supervisors with their proposals to evaluate
+        supervisors_db: List of supervisor records from database with embeddings
+
+    Returns:
+        The MRR score for the ModernBERT concatenated embedding approach.
+    """
     def embed(text):
         inputs = tokenizer(text, max_length=8192, truncation=True, return_tensors="pt")
         with torch.no_grad():
