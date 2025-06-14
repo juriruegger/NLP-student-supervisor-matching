@@ -15,7 +15,8 @@ from backend.test.embedding_approaches.modernbert.modernbert_averaged_embeddings
 from backend.test.embedding_approaches.modernbert.modernbert_averaged_embeddings_with_keywords import modernbert_averaged_embeddings_with_keywords
 from backend.test.embedding_approaches.modernbert.modernbert_concatenated_embeddings import modernbert_concatenated_embeddings
 from backend.test.embedding_approaches.modernbert.modernbert_concatenated_embeddings_with_keywords import modernbert_concatenated_embeddings_with_keywords
-from backend.test.embedding_approaches.tfidf_baseline import tfidf_baseline
+from backend.test.embedding_approaches.tfidf.tfidf_baseline import tfidf_baseline
+from backend.test.embedding_approaches.tfidf.tfidf_baseline_with_keywords import tfidf_baseline_with_keywords
 from backend.test.embedding_approaches.bert.bert_averaged import bert_averaged_embeddings
 from backend.test.embedding_approaches.bert.bert_averaged_with_keywords import bert_averaged_embeddings_with_keywords
 from backend.test.embedding_approaches.scibert.scibert_averaged import scibert_averaged_embeddings
@@ -39,7 +40,24 @@ supabase: Client = create_client(url, key)
 PURE_API_KEY = os.environ.get("PURE_API_KEY")
 PURE_BASE_URL = os.environ.get("PURE_BASE_URL")
 
-def fetch_supervisor_name(uuid):
+def extract_keywords(obj):
+    """
+    Extract and normalize keywords from a supervisor's research data.
+    """
+    keywords = set()
+    for keyWordGroup in obj.get("keywordGroups", []):
+        if not isinstance(keyWordGroup, dict):
+            continue
+        for keywordObj in keyWordGroup.get("keywords", []):
+            if not isinstance(keywordObj, dict):
+                continue
+            for keyword in keywordObj.get("freeKeywords", []):
+                if isinstance(keyword, str) and keyword:
+                    keyword = keyword.strip()
+                    keywords.add(keyword.lower())
+    return keywords
+
+def fetch_supervisor_name_and_keywords(uuid):
     try:
         person_url = f"{PURE_BASE_URL}/persons/{uuid}"
         person_headers = {
@@ -50,9 +68,10 @@ def fetch_supervisor_name(uuid):
         response.raise_for_status()
         person = response.json()
         name = person.get("name", {})
+        keywords = extract_keywords(person)
 
         if name:
-            return name
+            return name, keywords
         return None
     except Exception as e:
         print(f"Error fetching supervisor name: {e}")
@@ -120,7 +139,8 @@ def evaluate_proposals(proposals, supervisors_db, label):
         scibert_averaged_embeddings_with_keywords,
         specter2_averaged_embeddings,
         specter2_averaged_embeddings_with_keywords,
-        tfidf_baseline
+        tfidf_baseline,
+        tfidf_baseline_with_keywords
     ]
     mrr_approach_results = {}
 
@@ -143,7 +163,7 @@ def evaluate_proposals(proposals, supervisors_db, label):
 proposals = pd.read_csv("backend/test/proposals/proposals.csv")
 gpt_proposals = pd.read_csv("backend/test/proposals/gpt_proposals.csv")
 
-BATCH_SIZE = 25
+BATCH_SIZE = 20
 offset = 0
 supervisors_db = []
 
@@ -175,8 +195,9 @@ while True:
     offset += BATCH_SIZE
 
 for db_supervisor in tqdm(supervisors_db, desc="Fetching supervisor names and abstracts"):
-        name = fetch_supervisor_name(db_supervisor['uuid'])
+        name, keywords = fetch_supervisor_name_and_keywords(db_supervisor['uuid'])
         db_supervisor['name'] = name
+        db_supervisor['keywords'] = keywords
 
         for abstract in db_supervisor.get('abstracts', []):
             abstract_text = fetch_supervisor_abstract_text(abstract['uuid'])

@@ -158,6 +158,9 @@ export function StudentInput({ topics }: { topics: Topics }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Topics</FormLabel>
+                    <FormDescription>
+                      Select one or more topics that interest you.
+                    </FormDescription>
                     <FormControl>
                       <SelectTopics
                         topics={topics}
@@ -176,7 +179,7 @@ export function StudentInput({ topics }: { topics: Topics }) {
                 name="text"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Project details</FormLabel>
+                    <FormLabel>Project Details</FormLabel>
                     <FormDescription>
                       Describe the kind of project you&apos;d be most excited to
                       work on. You can mention topics, research questions,

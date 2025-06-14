@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -40,14 +39,17 @@ def calculate_tfidf_similarities(query_text, supervisors_db):
     
     for supervisor in supervisors_db:
         abstracts = supervisor.get('abstracts', [])
+        keywords = supervisor.get('keywords', [])
         if not abstracts:
             continue
-        
+
         supervisor_text = ""
+        supervisor_text_with_keywords = " ".join(keywords) + " " if keywords else ""
         for abstract in abstracts:
             text = abstract.get('text', '')
             if text:
                 supervisor_text += text + " "
+                supervisor_text_with_keywords += text + " "
         
         if supervisor_text:
             corpus.append(supervisor_text)
@@ -72,5 +74,5 @@ def calculate_tfidf_similarities(query_text, supervisors_db):
         })
     
     results.sort(key=lambda x: x['similarity'], reverse=True)
-    
+
     return results

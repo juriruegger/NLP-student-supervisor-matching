@@ -6,6 +6,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -13,6 +14,8 @@ import {
 } from "@/components/ui/sidebar";
 import { NavUser } from "./nav-user";
 import { currentUser } from "@clerk/nextjs/server";
+import Link from "next/link";
+import Image from "next/image";
 
 /**
  * Main navigation items for the application sidebar.
@@ -48,7 +51,18 @@ export async function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" variant="inset">
-      <SidebarContent className="mt-1.5">
+      <SidebarHeader>
+        <Link href="/" >
+          <Image
+            src="https://i.ibb.co/zV62nj6Q/May-18-2025-Optimizing-Modern-BERT-API.png"
+            alt="Logo"
+            width={32}
+            height={32}
+            className="rounded-xl mt-1.5"
+          />
+        </Link>
+      </SidebarHeader>
+      <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
