@@ -71,6 +71,7 @@ def specter2_averaged_embeddings_with_keywords(supervisors, supervisors_db):
 
         return similarities
 
+    ranks = []
     reciprocal_ranks = []
     for supervisor in supervisors:
         for proposal in supervisor['proposals']:
@@ -81,8 +82,33 @@ def specter2_averaged_embeddings_with_keywords(supervisors, supervisors_db):
                 if (similarity['supervisor']['name']['firstName'] == supervisor['firstName'] and
                     similarity['supervisor']['name']['lastName'] == supervisor['lastName']):
                     reciprocal_ranks.append(1.0 / rank)
+                    ranks.append(rank)
                     break
 
     mrr = sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0
-        
+
+    recall_k = [
+        sum(1 for rank in ranks if rank <= 1) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 2) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 3) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 4) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 5) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 6) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 7) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 8) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 9) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 10) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 11) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 12) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 13) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 14) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 15) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 16) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 17) / len(ranks) * 100 if ranks else 0,
+        sum(1 for rank in ranks if rank <= 18) / len(ranks) * 100 if ranks else 0,
+    ]
+
+    for i, v in enumerate(recall_k, 1):
+        print(f"recall@{i}: {v:.2f}%")
+
     return mrr

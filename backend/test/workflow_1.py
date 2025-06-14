@@ -143,7 +143,7 @@ def evaluate_proposals(proposals, supervisors_db, label):
 proposals = pd.read_csv("backend/test/proposals/proposals.csv")
 gpt_proposals = pd.read_csv("backend/test/proposals/gpt_proposals.csv")
 
-BATCH_SIZE = 25
+BATCH_SIZE = 20
 offset = 0
 supervisors_db = []
 
