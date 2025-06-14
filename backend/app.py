@@ -54,7 +54,7 @@ while True: # Fetching supervisors in batches
 response = supabase.table("supervisor_topic").select("*").execute()
 supervisors_topic_db = response.data
 
-NUM_OF_SUPERVISORS = 5
+NUM_OF_SUPERVISORS = 6
 
 @app.route('/api', methods=['POST'])
 def api(): 
